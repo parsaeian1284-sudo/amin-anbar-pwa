@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>انبار کاشی امین میبد</title>
   <link rel="manifest" href="./manifest.json" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -1749,17 +1749,33 @@
       const fname = 'havaleh-' + wb.no + '.pdf';
       const blob = await generatePDF(content, fname);
       if (!blob) return;
-      const file = new File([blob], fname, { type: 'application/pdf' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: 'حواله ' + wb.no, text: 'حواله شماره ' + wb.no });
-          return;
-        } catch (e) {
-          if (e && e.name === 'AbortError') return;
-        }
-      }
       downloadBlob(blob, fname);
-      toast('PDF دانلود شد — از پوشه Downloads در تلگرام یا واتساپ ارسال کنید');
+      toast('PDF ذخیره شد — روی «ارسال فایل» بزنید');
+      showSendBar(blob, fname, 'حواله ' + wb.no);
+    }
+
+    function showSendBar(blob, name, title) {
+      const old = document.getElementById('sendBar'); if (old) old.remove();
+      const bar = document.createElement('div');
+      bar.id = 'sendBar';
+      bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:86px;z-index:9999;background:#7d2519;color:#fff;border-radius:12px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;gap:8px;align-items:center;justify-content:space-between';
+      const txt = document.createElement('span'); txt.textContent = 'PDF ذخیره شد';
+      const btn = document.createElement('button'); btn.textContent = 'ارسال فایل';
+      btn.style.cssText = 'background:#f5d98a;color:#3d2e00;border:0;border-radius:8px;padding:10px 14px;font-weight:700';
+      const close = document.createElement('button'); close.textContent = '✕';
+      close.style.cssText = 'background:none;border:0;color:#fff;font-size:18px';
+      close.onclick = () => bar.remove();
+      btn.onclick = async () => {
+        const file = new File([blob], name, { type: 'application/pdf' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: title }); bar.remove(); }
+          catch (e) { if (!e || e.name !== 'AbortError') toast('ارسال انجام نشد. فایل در Downloads است'); }
+        } else {
+          toast('این مرورگر ارسال مستقیم ندارد. فایل را از Downloads بفرستید');
+        }
+      };
+      bar.append(txt, btn, close);
+      document.body.appendChild(bar);
     }
 
     function downloadBlob(blob, name) {
@@ -1791,17 +1807,9 @@
         </div>`;
       const blob = await generatePDF(html, 'mojoodi-rozane.pdf');
       if (!blob) return;
-      const file = new File([blob], 'mojoodi-rozane.pdf', { type: 'application/pdf' });
-      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: 'موجودی روزانه' });
-          return;
-        } catch (e) {
-          if (e && e.name === 'AbortError') return;
-        }
-      }
       downloadBlob(blob, 'mojoodi-rozane.pdf');
-      toast('PDF دانلود شد — از پوشه Downloads در تلگرام یا واتساپ ارسال کنید');
+      toast('PDF ذخیره شد — روی «ارسال فایل» بزنید');
+      showSendBar(blob, 'mojoodi-rozane.pdf', 'موجودی روزانه');
     }
 
     function printDaily() {
