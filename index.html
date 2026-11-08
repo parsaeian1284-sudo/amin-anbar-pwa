@@ -1749,26 +1749,17 @@
       const fname = 'havaleh-' + wb.no + '.pdf';
       const blob = await generatePDF(content, fname);
       if (!blob) return;
-
-      // مرحله ۱: همیشه اول دانلود/ذخیره روی گوشی (قابل اعتماد)
-      downloadBlob(blob, fname);
-      toast('PDF ذخیره شد (' + Math.round(blob.size/1024) + ' KB) — از دانلودها در تلگرام ارسال کنید');
-
-      // مرحله ۲: اگر سیستم اشتراک پشتیبانی کرد، بعد از ذخیره پیشنهاد ارسال بده
       const file = new File([blob], fname, { type: 'application/pdf' });
-      setTimeout(async () => {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            if (confirm('PDF ذخیره شد.\nمی‌خواهید همین الان ارسال هم بشود؟')) {
-              await navigator.share({ files: [file], title: 'حواله ' + wb.no, text: 'حواله شماره ' + wb.no });
-            }
-          }
+          await navigator.share({ files: [file], title: 'حواله ' + wb.no, text: 'حواله شماره ' + wb.no });
+          return;
         } catch (e) {
-          if (e.name !== 'AbortError') {
-            /* already downloaded */
-          }
+          if (e && e.name === 'AbortError') return;
         }
-      }, 400);
+      }
+      downloadBlob(blob, fname);
+      toast('PDF دانلود شد — از پوشه Downloads در تلگرام یا واتساپ ارسال کنید');
     }
 
     function downloadBlob(blob, name) {
@@ -1800,18 +1791,17 @@
         </div>`;
       const blob = await generatePDF(html, 'mojoodi-rozane.pdf');
       if (!blob) return;
-      downloadBlob(blob, 'mojoodi-rozane.pdf');
-      toast('PDF ذخیره شد (' + Math.round(blob.size/1024) + ' KB) — از دانلودها ارسال کنید');
       const file = new File([blob], 'mojoodi-rozane.pdf', { type: 'application/pdf' });
-      setTimeout(async () => {
+      if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            if (confirm('PDF ذخیره شد.\nمی‌خواهید همین الان ارسال هم بشود؟')) {
-              await navigator.share({ files: [file], title: 'موجودی روزانه' });
-            }
-          }
-        } catch (e) { /* already downloaded */ }
-      }, 400);
+          await navigator.share({ files: [file], title: 'موجودی روزانه' });
+          return;
+        } catch (e) {
+          if (e && e.name === 'AbortError') return;
+        }
+      }
+      downloadBlob(blob, 'mojoodi-rozane.pdf');
+      toast('PDF دانلود شد — از پوشه Downloads در تلگرام یا واتساپ ارسال کنید');
     }
 
     function printDaily() {
@@ -1880,7 +1870,9 @@
       state.settings.preparer = document.getElementById('setPreparer').value.trim() || 'Parsaeian';
       state.settings.phone = document.getElementById('setPhone')?.value.trim() || '';
       state.settings.receiptFooter = document.getElementById('setFooter')?.value.trim() || '';
+      const prevDigits = state.settings.digits || 'fa';
       state.settings.digits = document.getElementById('setDigits')?.value || 'fa';
+      if (prevDigits !== state.settings.digits) { saveState(); setTimeout(() => location.reload(), 400); }
       state.settings.smsTemplate = document.getElementById('setSms').value;
       // min stock
       const min = {};
