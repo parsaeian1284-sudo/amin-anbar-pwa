@@ -11,7 +11,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>انبار کاشی امین میبد</title>
   <link rel="manifest" href="./manifest.json" />
-  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -19,7 +19,7 @@
     :root {
       --navy: #1b2a4a;
       --gold: #c9a227;
-      --light-blue: #e6f2fb;
+      --light-blue: #eef2f8;
       --red-low: #fecaca;
       --red-text: #b91c1c;
       --bg: #f5f7fa;
@@ -137,7 +137,6 @@
     tr:nth-child(even) { background: #f9fafb; }
     .low-stock { background: var(--red-low) !important; color: var(--red-text); font-weight: 700; }
     .size-header {
-      background: var(--navy) !important; color: #fff !important;
       font-weight: 700; text-align: center;
     }
     .size-gap td { height: 10px; border: none; background: transparent !important; }
@@ -167,8 +166,8 @@
       border-radius: 50%; font-size: 18px; cursor: pointer;
     }
     .sig-box {
-      border: 2px dashed var(--border); border-radius: 10px;
-      height: 140px; position: relative; background: #fafafa;
+      border: none; border-bottom: 2px solid #9ca3af; border-radius: 0;
+      height: 200px; position: relative; background: transparent;
       touch-action: none; margin-bottom: 10px;
     }
     .sig-box canvas { width: 100%; height: 100%; display: block; border-radius: 8px; }
@@ -253,7 +252,7 @@
         <div class="logo-en">Amin Tile</div>
       </div>
       <div class="header-title">
-        <h1>نمایندگی کاشی امین میبد</h1>
+        <h1>انبار کاشی امین میبد</h1>
         <p class="subtitle-fa">انبار یزد</p>
       </div>
       <div style="width:52px"></div>
@@ -262,6 +261,14 @@
 
   <div class="main" id="main">
     <!-- ========== TAB: موجودی ========== -->
+    <div id="backupBanner" style="display:none;background:#fff7e6;border:1px solid #f5c518;border-radius:10px;padding:10px;margin:10px 12px;font-size:13px">
+      <div>وقت پشتیبان هفتگی است. اطلاعات فقط روی همین گوشی ذخیره می‌شود.</div>
+      <div style="display:flex;gap:8px;margin-top:8px"><button class="btn btn-primary btn-sm" onclick="backupJSON()">پشتیبان بگیر</button><button class="btn btn-outline btn-sm" onclick="hideBackupBanner()">بعداً</button></div>
+    </div>
+    <div style="margin:10px 12px;background:#fff;border-radius:10px;padding:10px;box-shadow:0 1px 3px rgba(0,0,0,.08)">
+      <div style="display:flex;gap:6px"><input id="uniSearch" placeholder="جستجو: کالا، کد، سایز، مشتری، شماره حواله، همکار" oninput="runUniSearch()" style="flex:1" /><button type="button" class="btn btn-outline btn-sm" onclick="voiceInput('uniSearch', runUniSearch)">🎤</button></div>
+      <div id="uniResults" style="margin-top:8px"></div>
+    </div>
     <div class="tab-content active" id="tab-inventory">
       <div class="card">
         <h3>ورود فایل Base</h3>
@@ -277,7 +284,8 @@
           <div><label>تاریخ ورود</label><input id="inDate" type="date" onchange="updateInDateLabel()" /><div id="inDateLabel" style="font-size:12px;color:var(--navy);font-weight:600"></div></div>
         </div>
         <div class="row">
-          <div><label>شرکت / تأمین‌کننده</label><input id="inSupplier" placeholder="مثلاً کاشی امین میبد" /></div>
+          <div><label>شرکت / تأمین‌کننده</label><input id="inSupplier" placeholder="مثلاً کاشی امین" /></div>
+          <div><label>راننده و ماشین (رسید ورودی)</label><input id="inDriver" placeholder="نام راننده، ماشین، پلاک" /></div>
           <div><label>توضیح</label><input id="inNotes" placeholder="اختیاری" /></div>
         </div>
         <div id="inItems"></div>
@@ -312,6 +320,7 @@
           <div><label>جایگاه</label><input id="mLoc" /></div>
           <div><label>توضیحات / برند</label><input id="mDesc" /></div>
         </div>
+        <div><label>عکس کالا (اختیاری)</label><input id="mPhoto" type="file" accept="image/*" capture="environment" /></div>
         <button class="btn btn-primary btn-block" onclick="addManualItem()">افزودن کالا</button>
       </div>
       <div class="card">
@@ -345,7 +354,7 @@
       <div class="card">
         <h3>حواله خروجی جدید</h3>
         <div class="row">
-          <div><label>شماره حواله *</label><input id="wbNo" placeholder="شماره یکتا" /></div>
+          <div><label>شماره حواله *</label><div style="display:flex;gap:6px"><input id="wbNo" placeholder="شماره یکتا" /><button type="button" class="btn btn-outline btn-sm" onclick="voiceInput('wbNo')">🎤</button></div></div>
           <div>
             <label>تاریخ (شمسی)</label>
             <input id="wbDate" type="date" onchange="updateWbDateLabel()" />
@@ -353,7 +362,7 @@
           </div>
         </div>
         <div class="row">
-          <div><label>نام مشتری *</label><input id="wbCustomer" /></div>
+          <div><label>نام مشتری *</label><div style="display:flex;gap:6px"><input id="wbCustomer" /><button type="button" class="btn btn-outline btn-sm" onclick="voiceInput('wbCustomer')">🎤</button></div></div>
           <div><label>تماس مشتری</label><input id="wbPhone" type="tel" /></div>
         </div>
         <div class="row">
@@ -414,10 +423,10 @@
         </div>
         <div class="filter-chips">
           <button class="chip active" onclick="setDailyRange(null,null,this)">کامل</button>
-          <button class="chip" onclick="setDailyRange(50,null,this)">بالای 50</button>
-          <button class="chip" onclick="setDailyRange(null,50,this)">زیر 50</button>
-          <button class="chip" onclick="setDailyRange(20,100,this)">20 تا 100</button>
-          <button class="chip" onclick="setDailyRange(200,500,this)">200 تا 500</button>
+          <button class="chip" onclick="setDailyRange(50,null,this)">بالای ۵۰</button>
+          <button class="chip" onclick="setDailyRange(null,50,this)">زیر ۵۰</button>
+          <button class="chip" onclick="setDailyRange(20,100,this)">۲۰ تا ۱۰۰</button>
+          <button class="chip" onclick="setDailyRange(200,500,this)">۲۰۰ تا ۵۰۰</button>
         </div>
         <div class="row">
           <div><label>فیلتر شرکت</label>
@@ -434,7 +443,7 @@
         <div class="table-wrap" id="dailyTableWrap"></div>
         <div class="row" style="margin-top:10px">
           <button class="btn btn-primary btn-sm" onclick="printDaily()">چاپ / ذخیره PDF</button>
-          <button class="btn btn-outline btn-sm" onclick="shareDailyPDF()">ارسال PDF</button>
+          <button class="btn btn-outline btn-sm" onclick="shareDailyPDF()">چاپ / PDF</button>
         </div>
       </div>
     </div>
@@ -450,15 +459,23 @@
         <label>نام تنظیم‌کننده</label>
         <input id="setPreparer" value="Parsaeian" />
         <label>تلفن انبار</label>
-        <input id="setPhone" placeholder="برای چاپ روی رسید" />
+        <input id="setPhone" placeholder="شماره مسئول انبار (روی سربرگ و رسید چاپ می‌شود)" />
         <label>متن پایین رسید حواله</label>
         <textarea id="setFooter" rows="2" placeholder="مثلاً: بار پس از خروج از انبار به عهده خریدار است."></textarea>
         <label>قالب پیامک به مشتری</label>
         <textarea id="setSms" rows="4"></textarea>
+        <label>آدرس ارسال خودکار به کانال (اختیاری)</label>
+        <input id="setWebhook" placeholder="آدرس Web App از Google Apps Script" />
         <p style="font-size:11px;color:var(--muted)">متغیرها: {customer} {no} {address} {map}</p>
         <h4 style="margin:14px 0 8px;font-size:14px">حداقل موجودی هر سایز (متر)</h4>
         <div id="minStockList"></div>
         <button class="btn btn-outline btn-sm" onclick="addMinStockRow()">+ افزودن سایز</button>
+        <label>نمایش اعداد</label>
+        <select id="setDigits"><option value="fa">اعداد فارسی (۱۲۳)</option><option value="en">اعداد انگلیسی (123)</option></select>
+        <label>نوع تاریخ</label>
+        <select id="setCalendar"><option value="shamsi">شمسی</option><option value="miladi">میلادی</option></select>
+        <label>امضای مسئول انبار (یک بار ذخیره می‌شود)</label>
+        <input id="setStockSig" type="file" accept="image/*" onchange="saveStockSig(this)" />
         <button class="btn btn-primary btn-block" style="margin-top:12px" onclick="saveSettings()">ذخیره تنظیمات</button>
       </div>
       <div class="card">
@@ -470,7 +487,7 @@
       </div>
       <div class="card">
         <p style="font-size:12px;color:var(--muted);text-align:center">
-          نسخه amin_v4 • داده فقط روی این گوشی ذخیره می‌شود<br>
+          نسخه setareh_v5 • داده فقط روی این گوشی ذخیره می‌شود<br>
           برای نصب به‌عنوان اپ: منوی مرورگر → افزودن به صفحه اصلی
         </p>
       </div>
@@ -512,15 +529,15 @@
       <h3>امضای حواله</h3>
       <p style="font-size:12px;color:var(--muted)" id="sigInfo"></p>
       <div class="sig-label">امضای تحویل‌گیرنده (مشتری)</div>
-      <div class="sig-box"><canvas id="sigCustomer"></canvas></div>
+      <div class="sig-box" onclick="openFullSig('customer')"><canvas id="sigCustomer"></canvas></div>
       <button class="btn btn-outline btn-sm" onclick="clearSig('customer')">پاک کردن</button>
       <div class="sig-label" style="margin-top:12px">امضای مسئول انبار</div>
-      <div class="sig-box"><canvas id="sigWarehouse"></canvas></div>
+      <div class="sig-box" id="sigWhBox" onclick="openFullSig('warehouse')"><canvas id="sigWarehouse"></canvas></div>
       <button class="btn btn-outline btn-sm" onclick="clearSig('warehouse')">پاک کردن</button>
       <div class="row" style="margin-top:14px">
         <button class="btn btn-primary" onclick="saveSignatures()">ثبت امضاها</button>
         <button class="btn btn-outline" onclick="printReceiptFromSig()">چاپ رسید</button>
-        <button class="btn btn-outline" onclick="sharePDFFromSig()">ارسال PDF</button>
+        <button class="btn btn-outline" onclick="sharePDFFromSig()">چاپ / PDF</button>
       </div>
     </div>
   </div>
@@ -545,10 +562,11 @@
     const STORAGE_KEY = 'amin_v4';
     // Logo (embedded for offline PDF/print)
     const LOGO_DATA = "data:image/jpeg;base64,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";
+    const LOGO_HAFEZ = "";
 
     const DEFAULT_SETTINGS = {
       mapLink: '',
-      address: 'یزد، انبار نمایندگی کاشی امین میبد',
+      address: 'یزد، انبار نمایندگی استان یزد کاشی امین میبد',
       preparer: 'Parsaeian',
       phone: '',
       receiptFooter: 'بار پس از خروج از انبار به عهده خریدار است.',
@@ -609,18 +627,25 @@
         .replace(/'/g, '&#39;');
     }
 
+    function calLocale() {
+      const en = state.settings && state.settings.digits === 'en';
+      const miladi = state.settings && state.settings.calendar === 'miladi';
+      if (miladi) return en ? 'en-US' : 'fa-IR-u-nu-latn';
+      return en ? 'fa-IR-u-ca-persian-u-nu-latn' : 'fa-IR-u-ca-persian';
+    }
     function faNum(n, digits = 2) {
-      if (n == null || isNaN(n)) return '0';
-      return Number(n).toLocaleString('fa-IR-u-nu-latn', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
+      const en = state.settings && state.settings.digits === 'en';
+      if (n == null || isNaN(n)) return en ? '0' : '۰';
+      return Number(n).toLocaleString(en ? 'en-US' : 'fa-IR', { maximumFractionDigits: digits, minimumFractionDigits: 0 });
     }
 
     function faDate(d, withTime = false) {
       try {
         const dt = d ? new Date(d) : new Date();
         if (withTime) {
-          return dt.toLocaleString('fa-IR-u-ca-persian-nu-latn', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+          return dt.toLocaleString(calLocale(), { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
-        return dt.toLocaleDateString('fa-IR-u-ca-persian-nu-latn', { year: 'numeric', month: 'long', day: 'numeric' });
+        return dt.toLocaleDateString(calLocale(), { year: 'numeric', month: 'long', day: 'numeric' });
       } catch {
         return d || '';
       }
@@ -660,13 +685,7 @@
       return { pallets: Math.floor(cartons / cpp), remain: cartons % cpp };
     }
 
-    function getBrand(desc) {
-      if (!desc) return 'سایر';
-      const d = String(desc).trim();
-      if (d.includes('ستاره')) return 'ستاره';
-      if (d.includes('حافظ')) return 'حافظ';
-      return d || 'سایر';
-    }
+    function getBrand(desc) { return 'سایر'; }
 
     // ==================== EXCEL IMPORT ====================
     function handleExcelImport(e) {
@@ -767,6 +786,15 @@
       const code = document.getElementById('mCode').value.trim();
       const name = document.getElementById('mName').value.trim();
       if (!code || !name) { toast('کد و نام الزامی است'); return; }
+      const f = document.getElementById('mPhoto')?.files?.[0];
+      if (f) {
+        compressImage(f, 320, 0.6).then(url => finishAddItem(code, name, url)).catch(() => finishAddItem(code, name, null));
+      } else {
+        finishAddItem(code, name, null);
+      }
+    }
+
+    function finishAddItem(code, name, photo) {
       const item = {
         id: uid(),
         code,
@@ -779,10 +807,12 @@
         weightPerCarton: parseFloat(document.getElementById('mWgt').value) || 0,
         location: document.getElementById('mLoc').value.trim(),
         description: document.getElementById('mDesc').value.trim(),
-        brand: getBrand(document.getElementById('mDesc').value)
+        brand: getBrand(document.getElementById('mDesc').value),
+        photo: photo
       };
       state.items.push(item);
       saveState();
+      if (document.getElementById('mPhoto')) document.getElementById('mPhoto').value = '';
       ['mCode','mName','mSize','mGrade','mStock','mM2','mCpp','mPallets','mWgt','mLoc','mDesc'].forEach(id => {
         const el = document.getElementById(id); if (el) el.value = '';
       });
@@ -831,7 +861,7 @@
         const palletStr = pallets ? (faNum(pallets, 0) + (remain ? ' + ' + faNum(remain, 0) + ' ک' : '')) : faNum(cartons, 0) + ' ک';
         return '<tr>' +
           '<td>' + esc(i.code) + '</td>' +
-          '<td>' + esc(i.name) + '</td>' +
+          '<td>' + (i.photo ? '<img src="' + i.photo + '" style="width:34px;height:34px;object-fit:cover;border-radius:6px;margin-left:6px;vertical-align:middle" />' : '') + esc(i.name) + '</td>' +
           '<td>' + esc(i.size) + '</td>' +
           '<td>' + esc(i.grade) + '</td>' +
           '<td>' + faNum(i.stockM2) + '</td>' +
@@ -904,6 +934,7 @@
       const date = document.getElementById('inDate')?.value || todayISO();
       const supplier = (document.getElementById('inSupplier')?.value || '').trim();
       const notes = (document.getElementById('inNotes')?.value || '').trim();
+      const driverIn = (document.getElementById('inDriver')?.value || '').trim();
       const lines = [];
       let hasError = false;
 
@@ -949,10 +980,11 @@
 
       const rec = {
         id: uid(), no: no || ('IN-' + Date.now().toString(36).toUpperCase()),
-        date, supplier, notes, items: lines, createdAt: new Date().toISOString()
+        date, supplier, notes, driver: driverIn, items: lines, createdAt: new Date().toISOString()
       };
       if (!state.incomings) state.incomings = [];
       state.incomings.unshift(rec);
+      setTimeout(() => printIncoming(rec), 300);
       saveState();
 
       document.getElementById('inNo').value = '';
@@ -1007,24 +1039,33 @@
       const div = document.getElementById('wbItems');
       const row = document.createElement('div');
       row.className = 'item-row';
-      const opts = state.items
-        .filter(i => i.stockM2 > 0)
-        .map(i => '<option value="' + i.id + '" ' + (i.id === itemId ? 'selected' : '') + '>' +
-          esc(i.code) + ' | ' + esc(i.name) + ' | ' + esc(i.size) + ' | موجودی: ' + faNum(i.stockM2) + '</option>')
-        .join('');
+      refreshItemList();
+      const cur = itemId ? state.items.find(i => i.id === itemId) : null;
       row.innerHTML =
-        '<div style="flex:2"><label>کالا</label><select class="wb-item-select" onchange="updateWbTotals()">' +
-        '<option value="">انتخاب...</option>' + opts + '</select></div>' +
+        '<div style="flex:2"><label>کالا (با نام، کد یا سایز جستجو کنید)</label><input class="wb-item-select" list="wbItemsList" value="' + (cur ? esc(itemLabel(cur)) : '') + '" placeholder="مثلاً آبادیس یا 960905" oninput="updateWbTotals()" /></div>' +
         '<div style="flex:1"><label>تعداد کارتن</label><input type="number" class="wb-item-cartons" min="1" value="' + esc(cartons) + '" oninput="updateWbTotals()" /></div>' +
         '<button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();updateWbTotals()">×</button>';
       div.appendChild(row);
       updateWbTotals();
     }
 
+    function itemLabel(i) { return i.code + ' | ' + i.name + ' | ' + i.size; }
+    function itemIdFromLabel(v) {
+      const t = String(v || '').trim();
+      const it = state.items.find(i => itemLabel(i) === t) || state.items.find(i => i.code === t);
+      return it ? it.id : '';
+    }
+    function refreshItemList() {
+      let dl = document.getElementById('wbItemsList');
+      if (!dl) { dl = document.createElement('datalist'); dl.id = 'wbItemsList'; document.body.appendChild(dl); }
+      dl.innerHTML = state.items.filter(i => i.stockM2 > 0)
+        .map(i => '<option value="' + esc(itemLabel(i)) + '">موجودی: ' + faNum(i.stockM2) + '</option>').join('');
+    }
+
     function updateWbTotals() {
       let totalCartons = 0, totalM2 = 0, totalWgt = 0;
       document.querySelectorAll('#wbItems .item-row').forEach(row => {
-        const id = row.querySelector('.wb-item-select').value;
+        const id = itemIdFromLabel(row.querySelector('.wb-item-select').value);
         const c = parseInt(row.querySelector('.wb-item-cartons').value) || 0;
         const item = state.items.find(i => i.id === id);
         if (item && c > 0) {
@@ -1049,7 +1090,7 @@
       const lines = [];
       let hasError = false;
       document.querySelectorAll('#wbItems .item-row').forEach(row => {
-        const id = row.querySelector('.wb-item-select').value;
+        const id = itemIdFromLabel(row.querySelector('.wb-item-select').value);
         const c = parseInt(row.querySelector('.wb-item-cartons').value) || 0;
         if (!id || c <= 0) return;
         const item = state.items.find(i => i.id === id);
@@ -1086,7 +1127,11 @@
         createdAt: new Date().toISOString()
       };
       state.waybills.unshift(wb);
+      if (wb.colleague) localStorage.setItem('lastColleague', wb.colleague);
       saveState();
+      { let kg = 0, cartons = 0; wb.items.forEach(l => { const it = state.items.find(i => i.id === l.itemId); if (it) { kg += l.cartons * (it.weightPerCarton || 0); cartons += l.cartons; } });
+        toast('وزن کل: ' + faNum(kg) + ' کیلو · ماشین پیشنهادی: ' + vehicleFor(kg));
+        sendToChannel({ type: 'waybill', no: wb.no, date: wb.date, customer: wb.customer, city: wb.city, colleague: wb.colleague, cartons: cartons, weightKg: kg, vehicle: vehicleFor(kg), driver: wb.driverInfo }); }
       // clear form
       document.getElementById('wbNo').value = '';
       document.getElementById('wbCustomer').value = '';
@@ -1155,6 +1200,7 @@
           ' | وزن: ' + faNum(t.totalWgt) + ' کیلو</div>' +
           (wb.photo ? '<img class="photo-thumb" src="' + wb.photo + '" onclick="window.open(this.src)" />' : '') +
           '<div class="row" style="margin-top:8px;gap:4px">' +
+          '<button class="btn btn-outline btn-sm" onclick="editWaybillInfo(\'' + wb.id + '\')">ویرایش</button>' +
           '<button class="btn btn-outline btn-sm" onclick="openSigModal(\'' + wb.id + '\')">امضا</button>' +
           '<button class="btn btn-outline btn-sm" onclick="printReceipt(\'' + wb.id + '\')">چاپ رسید</button>' +
           '<button class="btn btn-outline btn-sm" onclick="shareWaybillPDF(\'' + wb.id + '\')">PDF</button>' +
@@ -1264,10 +1310,17 @@
     }
 
     // ==================== KARDEX ====================
+    function newWaybillFor(col) {
+      switchTab('newwaybill');
+      document.getElementById('wbColleague').value = col;
+      localStorage.setItem('lastColleague', col);
+    }
+
     function renderKardex() {
       const col = document.getElementById('kardexColleague')?.value;
       const container = document.getElementById('kardexTable');
       if (!col) { container.innerHTML = ''; return; }
+      const newBtn = '<button class="btn btn-primary btn-sm" style="margin-bottom:8px" onclick="newWaybillFor(\'' + esc(col) + '\')">+ حواله جدید برای ' + esc(col) + '</button>';
       const map = {};
       state.waybills.filter(w => w.colleague === col).forEach(wb => {
         wb.items.forEach(l => {
@@ -1295,10 +1348,10 @@
           '</td><td>' + faNum(r.total, 0) + '</td><td>' + faNum(r.loaded, 0) + '</td><td>' + faNum(m2) +
           '</td><td>' + faNum(wgt) + '</td></tr>';
       });
-      html += '<tr style="font-weight:700;background:#e6f2fb"><td colspan="3">جمع</td><td>' + faNum(totalC, 0) +
+      html += '<tr style="font-weight:700;background:#eef2f8"><td colspan="3">جمع</td><td>' + faNum(totalC, 0) +
         '</td><td>' + faNum(totalL, 0) + '</td><td>' + faNum(totalM) + '</td><td>' + faNum(totalW) + '</td></tr>';
       html += '</tbody></table></div>';
-      container.innerHTML = html;
+      container.innerHTML = newBtn + html;
     }
 
     function exportKardexExcel() {
@@ -1370,69 +1423,72 @@
       const to = parseFloat(document.getElementById('dailyTo').value);
       const brand = document.getElementById('dailyBrand')?.value || '';
       const pageBreak = document.getElementById('dailyPageBreak')?.checked;
-
-      let list = state.items.filter(i => {
-        if (brand && (i.brand || 'سایر') !== brand) return false;
+      const BC = {
+        'سایر': { bg: '#1b2a4a', fg: '#ffffff', head: '#2c3e66', z: '#eef2f8', title: 'موجودی کاشی امین' }
+      };
+      const keyOf = i => 'سایر';
+      const list = state.items.filter(i => {
+        if (brand && keyOf(i) !== brand) return false;
         if (!isNaN(from) && i.stockM2 < from) return false;
         if (!isNaN(to) && i.stockM2 > to) return false;
         return true;
       });
-
-      // group by size
-      const bySize = {};
-      list.forEach(i => {
-        const s = i.size || 'نامشخص';
-        if (!bySize[s]) bySize[s] = [];
-        bySize[s].push(i);
-      });
-      const sizes = Object.keys(bySize).sort();
-
-      let totalM2 = 0;
-      sizes.forEach(s => bySize[s].forEach(i => totalM2 += i.stockM2));
-
+      const totalM2 = list.reduce((s, i) => s + i.stockM2, 0);
       document.getElementById('dailyStats').innerHTML =
         '<div class="stat"><div class="val">' + faNum(list.length, 0) + '</div><div class="lbl">ردیف</div></div>' +
         '<div class="stat"><div class="val">' + faNum(totalM2) + '</div><div class="lbl">متر مربع</div></div>';
 
-      // Report header with logo + Shamsi date (visible on screen too)
-      const reportHeader = 
-        '<div style="background:#1b2a4a;color:#fff;padding:12px 14px;border-radius:10px;margin-bottom:12px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:10px">' +
-          '<div style="width:48px;height:48px;border-radius:10px;overflow:hidden;border:none;background:transparent;flex-shrink:0">' +
-            '<img src="' + LOGO_DATA + '" style="width:100%;height:100%;object-fit:contain;display:block" alt="لوگو" />' +
-          '</div>' +
+      const logos = '<div style="width:64px;flex-shrink:0;text-align:center"><img src="' + LOGO_DATA + '" style="width:64px;height:auto;display:block" alt="امین" /></div>';
+      const logos2 = '';
+      const reportHeader =
+        '<div style="background:#1b2a4a;color:#fff;padding:12px 14px;border-radius:10px;margin-bottom:12px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+          logos +
           '<div style="text-align:center;flex:1">' +
-            '<div style="font-size:14px;font-weight:700">نمایندگی استان یزد کاشی امین میبد</div>' +
-            '<div style="font-size:11px;margin-top:2px;opacity:0.8;letter-spacing:0.5px;direction:ltr">Amin Tile</div>' +
-            '<div style="font-size:12px;margin-top:3px;opacity:0.95">گزارش موجودی روزانه</div>' +
-            '<div style="font-size:11px;margin-top:4px;opacity:0.85">تاریخ تنظیم: ' + faDate(new Date(), true) + '</div>' +
+            '<div style="font-size:12px;color:#f5d98a">نمایندگی استان یزد کاشی امین میبد</div>' +
+            '<div style="font-size:18px;font-weight:700;margin-top:2px">موجودی انبار یزد</div>' +
+            '<div style="font-size:11px;margin-top:4px;opacity:0.9">تاریخ تنظیم: ' + faDate(new Date(), true) + '</div>' +
           '</div>' +
-          '<div style="width:48px;flex-shrink:0"></div>' +
+          logos2 +
         '</div>';
 
-      let html = reportHeader + '<table><thead><tr><th>کد</th><th>نام طرح</th><th>سایز</th><th>متراژ هر کارتن</th><th>کارتن / پالت</th><th>متراژ</th></tr></thead><tbody>';
-      sizes.forEach((size, si) => {
-        const items = bySize[size];
-        const sizeSum = items.reduce((s, i) => s + i.stockM2, 0);
-        html += '<tr class="size-header"><td colspan="6">سایز ' + esc(size) + ' — جمع: ' + faNum(sizeSum) + ' متر</td></tr>';
-        items.forEach((i, ri) => {
-          const cartons = calcCartons(i.stockM2, i.m2PerCarton);
-          const min = state.settings.minStock[i.size] || 0;
-          const isLow = min > 0 && i.stockM2 <= min;
-          const bg = ri % 2 === 0 ? 'background:#e6f2fb' : 'background:#fff';
-          const { pallets, remain } = calcPallets(cartons, i.cartonsPerPallet);
-          let packStr = faNum(cartons, 0) + ' ک';
-          if (i.cartonsPerPallet > 0 && pallets > 0) {
-            packStr = faNum(pallets, 0) + ' پ' + (remain ? ' + ' + faNum(remain, 0) + ' ک' : '');
-          }
-          html += '<tr class="' + (isLow ? 'low-stock' : '') + '" style="' + (isLow ? '' : bg) + '">' +
-            '<td>' + esc(i.code) + '</td><td>' + esc(i.name) + '</td><td>' + esc(i.size) +
-            '</td><td>' + faNum(i.m2PerCarton) + '</td><td>' + packStr + '</td><td>' + faNum(i.stockM2) + '</td></tr>';
+      let html = '<div style="position:relative">' + watermarkHtml() + '<div style="position:relative;z-index:1">' + reportHeaderHtml() + '<div style="text-align:center;color:#111;font-weight:700;font-size:18px;margin:10px 0 6px">موجودی انبار یزد</div>';
+      const order = ['سایر'].filter(b => list.some(i => keyOf(i) === b));
+      order.forEach((b, bi) => {
+        const blist = list.filter(i => keyOf(i) === b);
+        const bySize = {};
+        blist.forEach(i => { const s = i.size || 'نامشخص'; (bySize[s] = bySize[s] || []).push(i); });
+        const sizes = Object.keys(bySize).sort();
+        const bTotal = blist.reduce((s, i) => s + i.stockM2, 0);
+        const brk = pageBreak && bi > 0 ? 'page-break-before:always;' : '';
+        const PC = '-webkit-print-color-adjust:exact;print-color-adjust:exact;';
+        html += '<div style="' + brk + '">' +
+          '<div style="background:#1b2a4a;color:#ffffff;border-radius:8px 8px 0 0;padding:8px 12px;margin-top:10px;display:flex;justify-content:space-between;font-weight:700;' + PC + '"><span>' + BC[b].title + '</span><span>' + faNum(blist.length, 0) + ' قلم · ' + faNum(bTotal) + ' متر</span></div>' +
+          '<table style="width:100%;border-collapse:collapse;font-size:11.5px;text-align:center"><thead><tr style="background:#2c3e66;color:#fff;' + PC + '">' +
+          '<th style="padding:6px">ردیف</th><th>کد طرح</th><th>نام طرح</th><th>سایز</th><th>گرید/درجه</th><th>متراژ هر کارتن</th><th>کارتن/پالت</th><th>متراژ</th></tr></thead><tbody>';
+        let n = 0;
+        sizes.forEach((size) => {
+          const items = bySize[size];
+          const sizeSum = items.reduce((s, i) => s + i.stockM2, 0);
+          html += '<tr style="background:#dbe7f5;color:#1b2a4a;font-weight:700;' + PC + '"><td colspan="8" style="text-align:right;padding:6px 8px">سایز ' + esc(size) + ' — جمع: ' + faNum(sizeSum) + ' متر</td></tr>';
+          items.forEach(i => {
+            n++;
+            const cartons = calcCartons(i.stockM2, i.m2PerCarton);
+            const min = state.settings.minStock[i.size] || 0;
+            const isLow = min > 0 && i.stockM2 <= min;
+            const { pallets, remain } = calcPallets(cartons, i.cartonsPerPallet);
+            let packStr = faNum(cartons, 0) + ' ک';
+            if (i.cartonsPerPallet > 0 && pallets > 0) packStr = faNum(pallets, 0) + ' پ' + (remain ? ' + ' + faNum(remain, 0) + ' ک' : '');
+            const bd = 'border-bottom:1px solid #e5e7eb;padding:5px;';
+            html += '<tr style="' + (isLow ? 'background:#fde2e2;color:#991b1b;font-weight:700;' : '') + PC + '">' +
+              '<td style="' + bd + '">' + n + '</td><td style="' + bd + '">' + esc(i.code) + '</td><td style="' + bd + 'text-align:right">' + esc(i.name) + '</td>' +
+              '<td style="' + bd + '">' + esc(i.size) + '</td><td style="' + bd + '">' + esc(i.grade || '') + '</td><td style="' + bd + '">' + faNum(i.m2PerCarton) + '</td>' +
+              '<td style="' + bd + '">' + packStr + '</td><td style="' + bd + 'font-weight:700">' + faNum(i.stockM2) + '</td></tr>';
+          });
         });
-        if (si < sizes.length - 1) {
-          html += '<tr class="size-gap"><td colspan="6"></td></tr>';
-        }
+        html += '</tbody></table></div></div>';
       });
-      html += '</tbody></table>';
+      if (!list.length) html += '<p style="text-align:center">کالایی پیدا نشد</p>';
+      html += '</div></div>';
       document.getElementById('dailyTableWrap').innerHTML = html;
     }
 
@@ -1503,6 +1559,65 @@
       if (sigPads[which]) sigPads[which].clear();
     }
 
+    function editWaybillInfo(id) {
+      const wb = state.waybills.find(w => w.id === id);
+      if (!wb) return;
+      const customer = prompt('نام مشتری:', wb.customer || '');
+      if (customer === null) return;
+      const phone = prompt('شماره تماس مشتری:', wb.phone || '');
+      if (phone === null) return;
+      const city = prompt('شهر مقصد:', wb.city || '');
+      if (city === null) return;
+      const colleague = prompt('همکار / پخش‌کننده:', wb.colleague || '');
+      if (colleague === null) return;
+      const driver = prompt('مشخصات راننده و ماشین:', wb.driverInfo || '');
+      if (driver === null) return;
+      wb.customer = customer.trim(); wb.phone = phone.trim(); wb.city = city.trim();
+      wb.colleague = colleague.trim(); wb.driverInfo = driver.trim();
+      saveState(); renderWaybills(); toast('مشخصات حواله به‌روز شد');
+    }
+
+    function openFullSig(which) {
+      const src = document.getElementById(which === 'customer' ? 'sigCustomer' : 'sigWarehouse');
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;background:#fff;z-index:100000;display:flex;flex-direction:column;padding:12px;direction:rtl';
+      ov.innerHTML = '<div style="font-weight:700;color:#1b2a4a;margin-bottom:8px">' + (which === 'customer' ? 'امضای تحویل‌گیرنده (مشتری)' : 'امضای مسئول انبار') + '</div>' +
+        '<canvas id="sfCanvas" style="flex:1;width:100%;border:1px dashed #999;border-radius:10px;touch-action:none"></canvas>' +
+        '<div style="display:flex;gap:8px;margin-top:10px"><button id="sfClear" class="btn btn-outline" style="flex:1">پاک کردن</button><button id="sfOk" class="btn btn-primary" style="flex:1">تأیید امضا</button></div>';
+      document.body.appendChild(ov);
+      const c = document.getElementById('sfCanvas');
+      const r = c.getBoundingClientRect();
+      const dpr = 2;
+      c.width = Math.round(r.width * dpr); c.height = Math.round(r.height * dpr);
+      const ctx = c.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.lineWidth = 2.6; ctx.lineCap = 'round'; ctx.strokeStyle = '#111';
+      if (src && src.width > 1) {
+        const img = new Image();
+        img.onload = () => ctx.drawImage(img, 0, 0, r.width, r.height);
+        img.src = src.toDataURL('image/png');
+      }
+      let drawing = false;
+      const pos = e => { const b = c.getBoundingClientRect(); const p = e.touches ? e.touches[0] : e; return [p.clientX - b.left, p.clientY - b.top]; };
+      c.addEventListener('pointerdown', e => { drawing = true; const [x, y] = pos(e); ctx.beginPath(); ctx.moveTo(x, y); e.preventDefault(); });
+      c.addEventListener('pointermove', e => { if (!drawing) return; const [x, y] = pos(e); ctx.lineTo(x, y); ctx.stroke(); e.preventDefault(); });
+      ['pointerup', 'pointerleave', 'pointercancel'].forEach(t => c.addEventListener(t, () => drawing = false));
+      document.getElementById('sfClear').onclick = () => ctx.clearRect(0, 0, r.width, r.height);
+      document.getElementById('sfOk').onclick = () => {
+        if (src) {
+          const sctx = src.getContext('2d');
+          const img = new Image();
+          img.onload = () => { sctx.setTransform(1, 0, 0, 1, 0, 0); sctx.clearRect(0, 0, src.width, src.height); sctx.drawImage(img, 0, 0, src.width, src.height); };
+          img.src = c.toDataURL('image/png');
+        }
+        ov.remove();
+      };
+    }
+
+    function hideWarehouseSig() {
+      const b = document.getElementById('sigWhBox');
+      if (b) { b.style.display = 'none'; if (b.previousElementSibling) b.previousElementSibling.style.display = 'none'; }
+    }
     function saveSignatures() {
       const wb = state.waybills.find(w => w.id === currentSigWaybillId);
       if (!wb) return;
@@ -1525,7 +1640,7 @@
     }
 
     // ==================== RECEIPT / PDF ====================
-    function buildReceiptHtml(wb, isLoading = false) {
+    function buildReceiptHtmlOld(wb, isLoading = false) {
       const t = getWaybillTotals(wb);
       const settings = state.settings;
       let rows = '';
@@ -1538,6 +1653,7 @@
           rows += '<tr>' +
             '<td style="border:1px solid #ccc;padding:6px">' + esc(item.code) + '</td>' +
             '<td style="border:1px solid #ccc;padding:6px">' + esc(item.name) + '</td>' +
+            '<td style="border:1px solid #ccc;padding:6px">' + esc(item.grade || '') + '</td>' +
             '<td style="border:1px solid #ccc;padding:6px">' + esc(item.size) + '</td>' +
             '<td style="border:1px solid #ccc;padding:6px;text-align:center">' + faNum(l.cartons, 0) + '</td>' +
             '<td style="border:1px solid #ccc;padding:6px;text-align:center">' + faNum(m2) + '</td>' +
@@ -1549,6 +1665,7 @@
           rows += '<tr>' +
             '<td style="border:1px solid #ccc;padding:6px">' + esc(item.code) + '</td>' +
             '<td style="border:1px solid #ccc;padding:6px">' + esc(item.name) + '</td>' +
+            '<td style="border:1px solid #ccc;padding:6px">' + esc(item.grade || '') + '</td>' +
             '<td style="border:1px solid #ccc;padding:6px">' + esc(item.size) + '</td>' +
             '<td style="border:1px solid #ccc;padding:6px;text-align:center">' + faNum(l.cartons, 0) + '</td>' +
             '<td style="border:1px solid #ccc;padding:6px;text-align:center">' + faNum(m2) + '</td>' +
@@ -1564,7 +1681,7 @@
             <div style="text-align:center;flex:1">
               <div style="font-size:16px;font-weight:700">نمایندگی استان یزد کاشی امین میبد</div>
               <div style="font-size:12px;opacity:.9;margin-top:2px">انبار یزد</div>
-              <div style="font-size:10px;opacity:.7;margin-top:2px;letter-spacing:0.5px;direction:ltr">Amin Tile</div>
+              <div style="font-size:10px;color:#c9a227;font-weight:700;margin-top:2px;letter-spacing:1px;direction:ltr">AMIN TILE</div>${state.settings.phone ? '<div style="font-size:11px;margin-top:3px">شماره مسئول انبار: ' + esc(state.settings.phone) + '</div>' : ''}
             </div>
             <div style="width:50px"></div>
           </div>
@@ -1585,6 +1702,7 @@
               <tr style="background:#1b2a4a;color:#fff">
                 <th style="border:1px solid #1b2a4a;padding:6px">کد</th>
                 <th style="border:1px solid #1b2a4a;padding:6px">نام طرح</th>
+                <th style="border:1px solid #1b2a4a;padding:6px">گرید/درجه</th>
                 <th style="border:1px solid #1b2a4a;padding:6px">سایز</th>
                 <th style="border:1px solid #1b2a4a;padding:6px">تعداد کارتن</th>
                 <th style="border:1px solid #1b2a4a;padding:6px">متراژ</th>
@@ -1624,17 +1742,157 @@
         </div>`;
     }
 
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function nowTime() { const d = new Date(); return pad2(d.getHours()) + ':' + pad2(d.getMinutes()); }
+    function dateTextOf(iso) {
+      const d = iso ? new Date(iso + 'T12:00:00') : new Date();
+      return d.toLocaleDateString(calLocale(), { year: 'numeric', month: 'long', day: 'numeric' });
+    }
+    function watermarkHtml() {
+      return '<img src="' + LOGO_DATA + '" alt="" style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:70%;opacity:0.06;pointer-events:none;z-index:0" />';
+    }
+    function reportHeaderHtml() {
+      return '<div style="background:#1b2a4a;color:#fff;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
+        '<div style="width:24%;text-align:center"><img src="' + LOGO_DATA + '" style="height:60px;width:auto;display:block;margin:0 auto" />' +
+          '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">AMIN TILE</div></div>' +
+        '<div style="flex:1;text-align:center"><div style="font-size:16px;font-weight:700">نمایندگی رسمی کاشی امین میبد</div>' +
+          '<div style="font-size:11px;color:#c9a227;margin-top:4px">استان یزد (خالقیه)</div></div>' +
+        '<div style="width:24%;text-align:center;font-size:11px;line-height:1.8"><div>تاریخ: ' + dateTextOf(null) + '</div><div>ساعت: ' + nowTime() + '</div></div>' +
+      '</div>';
+    }
+    function receiptHeaderHtml(title, dateIso, dateLabel) {
+      return '<div style="background:#1b2a4a;color:#fff;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
+        '<div style="width:30%;display:flex;align-items:center;gap:6px"><img src="' + LOGO_DATA + '" style="height:50px;width:auto" />' +
+          '<div><div style="font-size:12px;font-weight:700">نمایندگی رسمی کاشی امین میبد</div><div style="color:#c9a227;font-size:10px;letter-spacing:1px">AMIN TILE</div></div></div>' +
+        '<div style="flex:1;text-align:center;font-size:18px;font-weight:700;color:#c9a227">' + title + '</div>' +
+        '<div style="width:24%;text-align:center;font-size:11px;line-height:1.8"><div>' + dateLabel + ': ' + dateTextOf(dateIso) + '</div><div>ساعت: ' + nowTime() + '</div></div>' +
+      '</div>';
+    }
+    function sigBlock(label, src) {
+      return '<div style="flex:1;text-align:center"><div style="font-weight:700;font-size:12px">' + label + '</div>' +
+        '<div style="height:60px;display:flex;align-items:center;justify-content:center">' + (src ? '<img src="' + src + '" style="max-height:60px;max-width:100%" />' : '') + '</div>' +
+        '<div style="border-top:1px solid #6b7280;margin-top:4px;padding-top:3px;font-size:10px;color:#444">امضا و تاریخ</div></div>';
+    }
+    function buildReceiptHtml(wb, isLoading = false) {
+      let c = 0, m = 0, kg = 0;
+      const rows = (wb.items || []).map(l => {
+        const it = state.items.find(i => i.id === l.itemId) || {};
+        const m2 = l.cartons * (it.m2PerCarton || 0);
+        const w = l.cartons * (it.weightPerCarton || 0);
+        const remain = l.cartons - (l.loaded || 0);
+        c += l.cartons; m += m2; kg += w;
+        const td = 'border:1px solid #cbd5e1;padding:5px;text-align:center';
+        return '<tr><td style="' + td + '">' + esc(it.code || '') + '</td><td style="' + td + ';text-align:right">' + esc(it.name || '') + '</td>' +
+          '<td style="' + td + '">' + esc(it.size || '') + '</td><td style="' + td + '">' + esc(it.grade || '') + '</td>' +
+          '<td style="' + td + '">' + faNum(l.cartons, 0) + '</td><td style="' + td + '">' + faNum(m2) + '</td><td style="' + td + '">' + faNum(w) + '</td>' +
+          (isLoading ? '<td style="' + td + '">' + faNum(remain, 0) + '</td><td style="' + td + '">' + faNum(l.loaded || 0, 0) + '</td>' : '') + '</tr>';
+      }).join('');
+      const th = 'border:1px solid #1b2a4a;padding:6px;background:#2c3e66;color:#fff';
+      const title = isLoading ? 'رسید بارگیری مانده' : 'حواله خروجی';
+      return '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px;position:relative">' +
+        watermarkHtml() +
+        '<div style="position:relative;z-index:1">' +
+        receiptHeaderHtml(title, wb.day, 'تاریخ حواله') +
+        '<div style="display:flex;justify-content:space-between;margin:10px 2px;font-size:13px"><span>شماره حواله: <b>' + esc(wb.no) + '</b></span><span>تاریخ حواله: <b>' + dateTextOf(wb.day) + '</b></span></div>' +
+        '<div style="font-size:12px;margin:0 2px 8px">مشتری: <b>' + esc(wb.customer || '') + '</b> · تماس: ' + esc(wb.phone || wb.customerTel || '-') + ' · شهر مقصد: ' + esc(wb.city || '-') + (wb.colleague ? ' · همکار: ' + esc(wb.colleague) : '') + '</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr>' +
+          '<th style="' + th + '">کد</th><th style="' + th + '">نام طرح</th><th style="' + th + '">سایز</th><th style="' + th + '">گرید/درجه</th>' +
+          '<th style="' + th + '">کارتن</th><th style="' + th + '">متراژ</th><th style="' + th + '">وزن (کیلو)</th>' +
+          (isLoading ? '<th style="' + th + '">مانده</th><th style="' + th + '">بارگیری</th>' : '') +
+          '</tr></thead><tbody>' + rows + '</tbody>' +
+          '<tfoot><tr style="font-weight:700"><td colspan="4" style="border:1px solid #cbd5e1;padding:5px;text-align:center">جمع</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(c, 0) + '</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(m) + '</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(kg) + '</td>' + (isLoading ? '<td colspan="2"></td>' : '') + '</tr></tfoot></table>' +
+        '<div style="margin-top:10px;font-size:12px">راننده و ماشین: ' + esc(wb.driverInfo || '-').replace(/\n/g, ' · ') + '</div>' +
+        '<div style="display:flex;gap:20px;margin-top:22px">' +
+          sigBlock('مسئول انبار', state.settings.stockSig || '') +
+          sigBlock('تحویل‌گیرنده (مشتری)', wb.signCustomer || '') +
+        '</div>' +
+        '<div style="margin-top:14px;font-size:10px;color:#555;text-align:center">آدرس انبار: ' + esc(state.settings.address || '-') + (state.settings.phone ? ' · مسئول انبار: ' + esc(state.settings.phone) : '') + '</div>' +
+        '</div></div>';
+    }
+    function buildIncomingHtml(rec) {
+      let c = 0, m = 0;
+      const rows = (rec.items || []).map(l => {
+        const it = state.items.find(i => i.id === l.itemId) || {};
+        const m2 = l.m2 || (l.cartons * (it.m2PerCarton || 0));
+        c += l.cartons; m += m2;
+        const td = 'border:1px solid #cbd5e1;padding:5px;text-align:center';
+        return '<tr><td style="' + td + '">' + esc(l.code || it.code || '') + '</td><td style="' + td + ';text-align:right">' + esc(l.name || it.name || '') + '</td>' +
+          '<td style="' + td + '">' + esc(l.size || it.size || '') + '</td><td style="' + td + '">' + esc(it.grade || '') + '</td>' +
+          '<td style="' + td + '">' + faNum(l.cartons, 0) + '</td><td style="' + td + '">' + faNum(m2) + '</td></tr>';
+      }).join('');
+      const th = 'border:1px solid #1b2a4a;padding:6px;background:#2c3e66;color:#fff';
+      return '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px;position:relative">' +
+        watermarkHtml() +
+        '<div style="position:relative;z-index:1">' +
+        receiptHeaderHtml('حواله ورودی', rec.date, 'تاریخ حواله') +
+        '<div style="display:flex;justify-content:space-between;margin:10px 2px;font-size:13px"><span>شماره حواله: <b>' + esc(rec.no || '-') + '</b></span><span>تاریخ حواله: <b>' + dateTextOf(rec.date) + '</b></span></div>' +
+        '<div style="font-size:12px;margin:0 2px 8px">شرکت / تأمین‌کننده: <b>' + esc(rec.supplier || '-') + '</b></div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr>' +
+          '<th style="' + th + '">کد</th><th style="' + th + '">نام طرح</th><th style="' + th + '">سایز</th><th style="' + th + '">گرید/درجه</th><th style="' + th + '">کارتن</th><th style="' + th + '">متراژ</th>' +
+          '</tr></thead><tbody>' + rows + '</tbody>' +
+          '<tfoot><tr style="font-weight:700"><td colspan="4" style="border:1px solid #cbd5e1;padding:5px;text-align:center">جمع</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(c, 0) + '</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(m) + '</td></tr></tfoot></table>' +
+        '<div style="margin-top:10px;font-size:12px">راننده و ماشین: ' + esc(rec.driver || '-') + '</div>' +
+        (rec.notes ? '<div style="margin-top:4px;font-size:12px">توضیح: ' + esc(rec.notes) + '</div>' : '') +
+        '<div style="display:flex;gap:20px;margin-top:22px">' +
+          sigBlock('مسئول انبار', state.settings.stockSig || '') +
+          sigBlock('تحویل‌دهنده (شرکت)', '') +
+        '</div>' +
+        '</div></div>';
+    }
+    function printHtmlNow(html) {
+      const doc = '<!DOCTYPE html><html dir="rtl" lang="fa"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>انبار کاشی امین میبد</title>' +
+        '<style>@page{size:A4;margin:10mm}*{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important;box-sizing:border-box}' +
+        'html,body{margin:0;padding:0;background:#fff;color:#111;font-family:Tahoma,Vazirmatn,Arial,sans-serif;direction:rtl}' +
+        'body{padding:8px}table{border-collapse:collapse;width:100%}tr{page-break-inside:avoid}img{max-width:100%}' +
+        '.noprint{display:none!important}</style></head><body>' + html + '</body></html>';
+      const w = window.open('', '_blank');
+      if (!w) {
+        const el = document.getElementById('receipt');
+        el.innerHTML = html; el.style.display = 'block';
+        setTimeout(() => { window.print(); setTimeout(() => { el.style.display = 'none'; el.innerHTML = ''; }, 500); }, 200);
+        return;
+      }
+      w.document.open(); w.document.write(doc); w.document.close();
+      setTimeout(() => { try { w.focus(); w.print(); } catch (e) {} }, 700);
+    }
+    function printIncoming(rec) { printHtmlNow(buildIncomingHtml(rec)); }
+    function saveStockSig(input) {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      compressImage(f, 400, 0.9).then(url => {
+        state.settings.stockSig = url; saveState(); toast('امضای مسئول انبار ذخیره شد');
+      }).catch(() => toast('امضا ذخیره نشد'));
+    }
+    function markBackup() { localStorage.setItem('lastBackupAt', String(Date.now())); hideBackupBanner(); }
+    function backupChoice() {
+      const data = JSON.stringify(state, null, 2);
+      const name = 'backup-amin-v4-' + todayISO() + '.json';
+      const blob = new Blob([data], { type: 'application/json' });
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px';
+      ov.innerHTML = '<div style="background:#fff;border-radius:14px;padding:16px;width:100%;max-width:340px;direction:rtl">' +
+        '<div style="font-weight:700;color:#1b2a4a;margin-bottom:10px">پشتیبان کامل</div>' +
+        '<button id="bkSave" class="btn btn-primary btn-block">ذخیره روی گوشی</button>' +
+        '<button id="bkShare" class="btn btn-outline btn-block" style="margin-top:8px">ارسال به ایمیل / Google Drive / تلگرام</button>' +
+        '<button id="bkCancel" class="btn btn-outline btn-block" style="margin-top:8px">انصراف</button></div>';
+      document.body.appendChild(ov);
+      document.getElementById('bkSave').onclick = () => { downloadBlob(blob, name); markBackup(); ov.remove(); toast('پشتیبان روی گوشی ذخیره شد'); };
+      document.getElementById('bkCancel').onclick = () => ov.remove();
+      document.getElementById('bkShare').onclick = async () => {
+        const file = new File([blob], name, { type: 'application/json' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: 'پشتیبان انبار امین' }); markBackup(); ov.remove(); return; }
+          catch (e) { if (e && e.name === 'AbortError') return; }
+        }
+        downloadBlob(blob, name); markBackup(); ov.remove();
+        toast('فایل در Downloads ذخیره شد. از آنجا به ایمیل یا Drive بفرستید');
+      };
+    }
+
     function printReceipt(id, isLoading = false) {
       const wb = state.waybills.find(w => w.id === id);
       if (!wb) return;
-      const html = buildReceiptHtml(wb, isLoading);
-      const el = document.getElementById('receipt');
-      el.innerHTML = html;
-      el.style.display = 'block';
-      setTimeout(() => {
-        window.print();
-        setTimeout(() => { el.style.display = 'none'; el.innerHTML = ''; }, 500);
-      }, 200);
+      printHtmlNow(buildReceiptHtml(wb, isLoading));
     }
 
     async function generatePDF(htmlContent, filename) {
@@ -1733,35 +1991,30 @@
       }
     }
 
-    async function shareWaybillPDF(id) {
-      const wb = state.waybills.find(w => w.id === id);
-      if (!wb) return;
-      toast('در حال ساخت PDF...');
-      const content = buildReceiptHtml(wb);
-      if (!content || content.length < 50) { toast('محتوای رسید خالی است'); return; }
-      const fname = 'havaleh-' + wb.no + '.pdf';
-      const blob = await generatePDF(content, fname);
-      if (!blob) return;
+        function shareWaybillPDF(id) { printReceipt(id); }
 
-      // مرحله ۱: همیشه اول دانلود/ذخیره روی گوشی (قابل اعتماد)
-      downloadBlob(blob, fname);
-      toast('PDF ذخیره شد (' + Math.round(blob.size/1024) + ' KB) — از دانلودها در تلگرام ارسال کنید');
-
-      // مرحله ۲: اگر سیستم اشتراک پشتیبانی کرد، بعد از ذخیره پیشنهاد ارسال بده
-      const file = new File([blob], fname, { type: 'application/pdf' });
-      setTimeout(async () => {
-        try {
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            if (confirm('PDF ذخیره شد.\nمی‌خواهید همین الان ارسال هم بشود؟')) {
-              await navigator.share({ files: [file], title: 'حواله ' + wb.no, text: 'حواله شماره ' + wb.no });
-            }
-          }
-        } catch (e) {
-          if (e.name !== 'AbortError') {
-            /* already downloaded */
-          }
+    function showSendBar(blob, name, title) {
+      const old = document.getElementById('sendBar'); if (old) old.remove();
+      const bar = document.createElement('div');
+      bar.id = 'sendBar';
+      bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:86px;z-index:9999;background:#1b2a4a;color:#fff;border-radius:12px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;gap:8px;align-items:center;justify-content:space-between';
+      const txt = document.createElement('span'); txt.textContent = 'PDF ذخیره شد';
+      const btn = document.createElement('button'); btn.textContent = 'ارسال فایل';
+      btn.style.cssText = 'background:#f5d98a;color:#3d2e00;border:0;border-radius:8px;padding:10px 14px;font-weight:700';
+      const close = document.createElement('button'); close.textContent = '✕';
+      close.style.cssText = 'background:none;border:0;color:#fff;font-size:18px';
+      close.onclick = () => bar.remove();
+      btn.onclick = async () => {
+        const file = new File([blob], name, { type: 'application/pdf' });
+        if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
+          try { await navigator.share({ files: [file], title: title }); bar.remove(); }
+          catch (e) { if (!e || e.name !== 'AbortError') toast('ارسال انجام نشد. فایل در Downloads است'); }
+        } else {
+          toast('این مرورگر ارسال مستقیم ندارد. فایل را از Downloads بفرستید');
         }
-      }, 400);
+      };
+      bar.append(txt, btn, close);
+      document.body.appendChild(bar);
     }
 
     function downloadBlob(blob, name) {
@@ -1772,63 +2025,11 @@
       URL.revokeObjectURL(a.href);
     }
 
-    async function shareDailyPDF() {
-      toast('در حال ساخت PDF...');
-      const wrap = document.getElementById('dailyTableWrap').innerHTML;
-      const stats = document.getElementById('dailyStats').innerHTML;
-      const html = `
-        <div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;width:100%;background:#fff;padding:12px">
-          <div style="background:#1b2a4a;color:#fff;padding:12px 16px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between">
-            <div style="width:48px;height:48px;border-radius:10px;overflow:hidden;border:none;background:transparent;flex-shrink:0"><img src="${LOGO_DATA}" style="width:100%;height:100%;object-fit:contain" alt="" /></div>
-            <div style="text-align:center;flex:1">
-              <div style="font-size:15px;font-weight:700">نمایندگی استان یزد کاشی امین میبد</div>
-              <div style="font-size:10px;opacity:.75;margin-top:2px;letter-spacing:0.5px;direction:ltr">Amin Tile</div>
-              <div style="font-size:13px;margin-top:3px">گزارش موجودی روزانه</div>
-              <div style="font-size:11px;opacity:.85;margin-top:3px">${faDate(new Date(), true)} — تنظیم‌کننده: ${state.settings.preparer || ''}</div>
-            </div>
-            <div style="width:48px"></div>
-          </div>
-          <div style="margin:12px 0">${stats}</div>
-          ${wrap}
-        </div>`;
-      const blob = await generatePDF(html, 'mojoodi-rozane.pdf');
-      if (!blob) return;
-      downloadBlob(blob, 'mojoodi-rozane.pdf');
-      toast('PDF ذخیره شد (' + Math.round(blob.size/1024) + ' KB) — از دانلودها ارسال کنید');
-      const file = new File([blob], 'mojoodi-rozane.pdf', { type: 'application/pdf' });
-      setTimeout(async () => {
-        try {
-          if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-            if (confirm('PDF ذخیره شد.\nمی‌خواهید همین الان ارسال هم بشود؟')) {
-              await navigator.share({ files: [file], title: 'موجودی روزانه' });
-            }
-          }
-        } catch (e) { /* already downloaded */ }
-      }, 400);
-    }
+        function shareDailyPDF() { printDaily(); }
 
-    function printDaily() {
+        function printDaily() {
       const wrap = document.getElementById('dailyTableWrap').innerHTML;
-      const stats = document.getElementById('dailyStats').innerHTML;
-      const html = `
-        <div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;padding:8px">
-          <div style="background:#1b2a4a;color:#fff;padding:10px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between">
-            <div style="width:44px;height:44px;border-radius:8px;overflow:hidden;border:none;background:transparent;flex-shrink:0"><img src="${LOGO_DATA}" style="width:100%;height:100%;object-fit:contain" alt="" /></div>
-            <div style="text-align:center;flex:1">
-              <div style="font-size:14px;font-weight:700">نمایندگی استان یزد کاشی امین میبد</div>
-              <div style="font-size:10px;opacity:.75;margin-top:2px;letter-spacing:0.5px;direction:ltr">Amin Tile</div>
-              <div style="font-size:12px;margin-top:2px">گزارش موجودی روزانه — ${faDate(new Date(), true)}</div>
-            </div>
-            <div style="width:44px"></div>
-          </div>
-          <div style="margin:10px 0">${stats}</div>
-          ${wrap}
-          <div style="font-size:11px;margin-top:12px;color:#6b7280">تنظیم‌کننده: ${esc(state.settings.preparer || '')}</div>
-        </div>`;
-      const el = document.getElementById('receipt');
-      el.innerHTML = html;
-      el.style.display = 'block';
-      setTimeout(() => { window.print(); setTimeout(() => { el.style.display = 'none'; }, 400); }, 200);
+      printHtmlNow('<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:8px">' + wrap + '</div>');
     }
 
     // ==================== SMS / SHARE ====================
@@ -1868,12 +2069,15 @@
 
     // ==================== SETTINGS ====================
     function saveSettings() {
+      state.settings.digits = document.getElementById('setDigits')?.value || 'fa';
+      state.settings.calendar = document.getElementById('setCalendar')?.value || 'shamsi';
       state.settings.mapLink = document.getElementById('setMap').value.trim();
       state.settings.address = document.getElementById('setAddress').value.trim();
       state.settings.preparer = document.getElementById('setPreparer').value.trim() || 'Parsaeian';
       state.settings.phone = document.getElementById('setPhone')?.value.trim() || '';
       state.settings.receiptFooter = document.getElementById('setFooter')?.value.trim() || '';
       state.settings.smsTemplate = document.getElementById('setSms').value;
+      state.settings.webhookUrl = document.getElementById('setWebhook')?.value.trim() || '';
       // min stock
       const min = {};
       document.querySelectorAll('.min-stock-row').forEach(row => {
@@ -1888,7 +2092,10 @@
     }
 
     function loadSettingsToForm() {
+      { const sd = document.getElementById('setDigits'); if (sd) sd.value = (state.settings && state.settings.digits) || 'fa'; }
+      { const sc = document.getElementById('setCalendar'); if (sc) sc.value = (state.settings && state.settings.calendar) || 'shamsi'; }
       document.getElementById('setMap').value = state.settings.mapLink || '';
+      { const sw = document.getElementById('setWebhook'); if (sw) sw.value = state.settings.webhookUrl || ''; }
       document.getElementById('setAddress').value = state.settings.address || '';
       document.getElementById('setPreparer').value = state.settings.preparer || 'Parsaeian';
       const sp = document.getElementById('setPhone'); if (sp) sp.value = state.settings.phone || '';
@@ -1925,12 +2132,88 @@
     }
 
     // ==================== BACKUP ====================
-    function backupJSON() {
-      const data = JSON.stringify(state, null, 2);
-      const blob = new Blob([data], { type: 'application/json' });
-      downloadBlob(blob, 'backup-amin-v4-' + todayISO() + '.json');
-      toast('پشتیبان دانلود شد');
+
+    function compressImage(file, maxSide, quality) {
+      return new Promise((resolve, reject) => {
+        const url = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          const sc = Math.min(1, maxSide / Math.max(img.width, img.height));
+          const c = document.createElement('canvas');
+          c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+          c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+          URL.revokeObjectURL(url);
+          resolve(c.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('img')); };
+        img.src = url;
+      });
     }
+
+    function voiceInput(targetId, after) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) { toast('ورود صوتی در این مرورگر پشتیبانی نمی‌شود'); return; }
+      const rec = new SR();
+      rec.lang = 'fa-IR'; rec.interimResults = false; rec.maxAlternatives = 1;
+      rec.onresult = (e) => {
+        const t = e.results[0][0].transcript.trim();
+        const el = document.getElementById(targetId);
+        if (el) el.value = t;
+        if (after) after();
+        if (typeof renderInventory === 'function' && targetId === 'invSearch') renderInventory();
+      };
+      rec.onerror = () => toast('صدا شنیده نشد، دوباره تلاش کنید');
+      toast('بگویید...');
+      rec.start();
+    }
+
+    function runUniSearch() {
+      const q = (document.getElementById('uniSearch')?.value || '').trim().toLowerCase();
+      const box = document.getElementById('uniResults');
+      if (!box) return;
+      if (!q) { box.innerHTML = ''; return; }
+      const hit = s => String(s || '').toLowerCase().includes(q);
+      const items = state.items.filter(i => hit(i.code) || hit(i.name) || hit(i.size) || hit(i.location)).slice(0, 8);
+      const wbs = state.waybills.filter(w => hit(w.no) || hit(w.customer) || hit(w.colleague) || hit(w.city)).slice(0, 8);
+      const cols = [...new Set(state.waybills.map(w => w.colleague).filter(Boolean))].filter(c => hit(c)).slice(0, 5);
+      let html = '';
+      items.forEach(i => { html += '<div class="wb-item" style="padding:6px;border-bottom:1px solid #eee;cursor:pointer" onclick="goItem(\'' + esc(i.code) + '\')">کالا: ' + esc(i.code) + ' · ' + esc(i.name) + ' · ' + esc(i.size) + ' · ' + faNum(i.stockM2) + ' متر</div>'; });
+      wbs.forEach(w => { html += '<div style="padding:6px;border-bottom:1px solid #eee;cursor:pointer" onclick="switchTab(\'waybills\')">حواله ' + esc(w.no) + ' · ' + esc(w.customer) + '</div>'; });
+      cols.forEach(c => { html += '<div style="padding:6px;border-bottom:1px solid #eee;cursor:pointer" onclick="goColleague(\'' + esc(c) + '\')">همکار: ' + esc(c) + '</div>'; });
+      box.innerHTML = html || '<div class="muted">چیزی پیدا نشد</div>';
+    }
+    function goItem(code) {
+      switchTab('inventory');
+      const s = document.getElementById('invSearch'); if (s) { s.value = code; renderInventory(); }
+    }
+    function goColleague(c) {
+      switchTab('waybills');
+      const sel = document.getElementById('kardexColleague');
+      if (sel) { sel.value = c; renderKardex(); }
+    }
+
+    function hideBackupBanner() { const b = document.getElementById('backupBanner'); if (b) b.style.display = 'none'; }
+    function checkBackupReminder() {
+      const last = parseInt(localStorage.getItem('lastBackupAt') || '0', 10);
+      if (!last || Date.now() - last > 7 * 24 * 3600 * 1000) {
+        const b = document.getElementById('backupBanner'); if (b) b.style.display = 'block';
+      }
+    }
+
+    function vehicleFor(kg) {
+      if (kg <= 1000) return 'وانت (تا ۱۰۰۰ کیلو)';
+      if (kg <= 3000) return 'کامیونت / کامیون کوچک (تا ۳۰۰۰ کیلو)';
+      if (kg <= 8000) return 'کامیون متوسط (تا ۸۰۰۰ کیلو)';
+      return 'کامیون بزرگ یا بیش از یک ماشین';
+    }
+
+    function sendToChannel(payload) {
+      const url = state.settings && state.settings.webhookUrl;
+      if (!url) return;
+      fetch(url, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify(payload) }).catch(() => {});
+    }
+
+        function backupJSON() { backupChoice(); }
 
     function restoreJSON(e) {
       const file = e.target.files[0];
@@ -2027,6 +2310,10 @@
     updateWbDateLabel();
     loadState();
     renderAll();
+    hideWarehouseSig();
+    checkBackupReminder();
+    { const lc = localStorage.getItem('lastColleague'); const wc = document.getElementById('wbColleague'); if (wc && lc && !wc.value) wc.value = lc; }
+    refreshItemList();
     loadSettingsToForm();
 
     // Service Worker (basic offline)
