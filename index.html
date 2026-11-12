@@ -313,7 +313,8 @@
           <div><label>تعداد پالت</label><input id="mPallets" type="number" step="0.01" placeholder="اختیاری" oninput="calcManualFromPallets()" /></div>
         </div>
         <div class="row">
-          <div><label>وزن هر کارتن (کیلو)</label><input id="mWgt" type="number" step="0.01" /></div>
+          <div><label>وزن هر کارتن (کیلو)</label><input id="mWgt" type="number" step="0.01" />
+            <label>ارزش هر متر مربع</label><input id="mVal" type="number" step="1" /></div>
           <div></div>
         </div>
         <div class="row">
@@ -372,6 +373,8 @@
         </div>
         <datalist id="colleagueList"></datalist>
         <label>مشخصات راننده و ماشین</label>
+        <label style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="wbBreak" style="width:auto" /> حواله شکستگی / ضایعات (جدا گزارش ماهانه می‌شود)</label>
+        <input id="wbReason" placeholder="دلیل شکستگی (مثلاً ترک، حمل ناقص)" />
         <label>نام راننده</label><input id="wbDriverName" placeholder="مثلاً آقای محمدی" />
         <label>شماره تلفن راننده</label><input id="wbDriverPhone" type="tel" placeholder="09..." />
         <label>ماشین / پلاک / توضیح</label>
@@ -464,6 +467,7 @@
           <button class="btn btn-outline btn-sm" onclick="showMore('cash')">صندوق انبار</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('shift')">ساعت کار انباردارها</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('book')">دفترچه تلفن</button>
+          <button class="btn btn-outline btn-sm" onclick="printBreakage()">گزارش شکستگی ماه</button>
         </div>
       </div>
 
@@ -561,6 +565,10 @@
         <input id="setPhone" placeholder="شماره مسئول انبار (روی سربرگ و رسید چاپ می‌شود)" />
         <label>توضیحات زیر حواله (چند خطی، روی رسید چاپ می‌شود)</label>
         <textarea id="setFooter" rows="2" placeholder="مثلاً: بار پس از خروج از انبار به عهده خریدار است."></textarea>
+        <label>رنگ نوشته توضیحات زیر حواله</label><input id="setNoteColor" type="color" value="#111111" />
+        <label>رنگ زمینه کادر توضیحات</label><input id="setNoteBg" type="color" value="#ffffff" />
+        <label>متن زیر لوگو در سربرگ (لاتین)</label><input id="setLetterLatin" placeholder="AMIN TILE" />
+        <label>متن زیر عنوان سربرگ (لاتین)</label><input id="setLetterSub" placeholder="Yazd Warehouse" />
         <label>قالب پیامک به مشتری</label>
         <textarea id="setSms" rows="4"></textarea>
         <label>آدرس ارسال خودکار به کانال (اختیاری)</label>
@@ -573,6 +581,10 @@
         <select id="setDigits"><option value="fa">اعداد فارسی (۱۲۳)</option><option value="en">اعداد انگلیسی (123)</option></select>
         <label>نوع تاریخ</label>
         <select id="setCalendar"><option value="shamsi">شمسی</option><option value="miladi">میلادی</option></select>
+        <label>تاریخ سربرگ موجودی روزانه</label><input id="setDailyDate" placeholder="مثلاً ۲۱ آبان ۱۴۰۵" />
+        <label>ساعت سربرگ موجودی روزانه</label><input id="setDailyTime" placeholder="مثلاً ۰۸:۰۰" />
+        <label>رنگ نوشته‌های تاریخ و ساعت موجودی روزانه</label><input id="setDailyColor" type="color" value="#e9c46a" />
+        <label>نام تنظیم‌کننده در موجودی روزانه: بالا یا پایین گزارش</label><select id="setPrepPos"><option value="top">بالای گزارش</option><option value="bottom">پایین گزارش</option></select>
         <label>امضای مسئول انبار (یک بار ذخیره می‌شود)</label>
         <input id="setStockSig" type="file" accept="image/*" onchange="saveStockSig(this)" />
         <label>امضای دیجیتال تحویل‌گیرنده (اختیاری، برای رسید)</label>
@@ -849,6 +861,7 @@
             const cpp = parseFloat(row['کارتن در هر پالت'] ?? row['کارتن در پالت'] ?? 0) || 0;
             const m2c = parseFloat(row['متراژ هر کارتن'] ?? 0) || 0;
             const wgt = parseFloat(row['وزن هر کارتن'] ?? 0) || 0;
+      const valM2 = parseFloat(String(row['ارزش'] ?? 0).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/٫/g, '.').replace(/,|٬/g, '')) || 0;
             const stock = parseFloat(row['موجودی نهایی (متراژ)'] ?? row['موجودی نهایی'] ?? row['موجودی'] ?? 0) || 0;
             let loc = String(row['جایگاه نهایی'] ?? row['جایگاه'] ?? '').trim();
             let desc = String(row['توضیحات'] ?? '').trim();
@@ -859,6 +872,7 @@
               cartonsPerPallet: cpp,
               m2PerCarton: m2c,
               weightPerCarton: wgt,
+              valuePerM2: valM2,
               stockM2: stock,
               location: loc,
               description: desc,
@@ -909,6 +923,7 @@
         m2PerCarton: parseFloat(document.getElementById('mM2').value) || 0,
         cartonsPerPallet: parseFloat(document.getElementById('mCpp').value) || 0,
         weightPerCarton: parseFloat(document.getElementById('mWgt').value) || 0,
+        valuePerM2: parseFloat(document.getElementById('mVal')?.value) || 0,
         location: document.getElementById('mLoc').value.trim(),
         description: document.getElementById('mDesc').value.trim(),
         brand: getBrand(document.getElementById('mDesc').value),
@@ -966,6 +981,7 @@
         '<div class="row">' + f('سایز', 'size') + f('گرید / درجه', 'grade') + '</div>' +
         '<div class="row">' + f('متراژ موجود', 'stockM2', 'number', '0.01') + f('متراژ هر کارتن', 'm2PerCarton', 'number', '0.01') + '</div>' +
         '<div class="row">' + f('کارتن در پالت', 'cartonsPerPallet', 'number') + f('وزن هر کارتن (کیلو)', 'weightPerCarton', 'number', '0.01') + '</div>' +
+        '<div class="row">' + f('ارزش هر متر مربع', 'valuePerM2', 'number', '1') + '</div>' +
         '<div class="row">' + f('جایگاه', 'location') + f('توضیحات / برند', 'description') + '</div>' +
         '<div style="display:flex;gap:8px;margin-top:12px"><button id="eiSave" class="btn btn-primary" style="flex:1">ذخیره</button><button id="eiCancel" class="btn btn-outline" style="flex:1">انصراف</button></div></div>';
       document.body.appendChild(ov);
@@ -1239,7 +1255,7 @@
     }
 
     function updateWbTotals() {
-      let totalCartons = 0, totalM2 = 0, totalWgt = 0;
+      let totalCartons = 0, totalM2 = 0, totalWgt = 0, totalVal = 0;
       document.querySelectorAll('#wbItems .item-row').forEach(row => {
         const id = itemIdFromLabel(row.querySelector('.wb-item-select').value);
         const c = lineCartons(row);
@@ -1248,6 +1264,7 @@
           totalCartons += c;
           totalM2 += c * (item.m2PerCarton || 0);
           totalWgt += c * (item.weightPerCarton || 0);
+          totalVal += c * (item.m2PerCarton || 0) * (item.valuePerM2 || 0);
         }
       });
       document.getElementById('wbTotals').innerHTML =
@@ -1277,7 +1294,7 @@
           hasError = true;
           return;
         }
-        lines.push({ itemId: id, cartons: c, loaded: 0 });
+        lines.push({ itemId: id, cartons: c, loaded: 0, value: c * (item.m2PerCarton || 0) * (item.valuePerM2 || 0) });
       });
       if (hasError) return;
       if (!lines.length) { toast('حداقل یک کالا اضافه کنید'); return; }
@@ -1299,6 +1316,8 @@
         colleague: document.getElementById('wbColleague').value.trim(),
         driverInfo: document.getElementById('wbDriver').value.trim(),
         driverName: (document.getElementById('wbDriverName')?.value || '').trim(),
+        kind: document.getElementById('wbBreak')?.checked ? 'breakage' : 'sale',
+        reason: (document.getElementById('wbReason')?.value || '').trim(),
         driverPhone: (document.getElementById('wbDriverPhone')?.value || '').trim(),
         items: lines,
         signatures: { customer: null, warehouse: null },
@@ -1513,6 +1532,33 @@
       localStorage.setItem('lastColleague', col);
     }
 
+    function printBreakage() {
+      const month = (prompt('ماه گزارش شکستگی (مثلاً 2026-11)', new Date().toISOString().slice(0, 7)) || '').trim();
+      if (!month) return;
+      const rowsData = [];
+      state.waybills.forEach(w => {
+        if (w.kind !== 'breakage' || !(w.date || '').startsWith(month)) return;
+        (w.items || []).forEach(l => {
+          const it = state.items.find(i => i.id === l.itemId) || {};
+          rowsData.push({ date: w.date, no: w.no, code: it.code || '', name: it.name || '', size: it.size || '', cartons: l.cartons, m2: l.cartons * (it.m2PerCarton || 0), value: l.cartons * (it.m2PerCarton || 0) * (it.valuePerM2 || 0), reason: w.reason || '' });
+        });
+      });
+      rowsData.sort((a, b) => String(a.date).localeCompare(String(b.date)));
+      const td = 'border:1px solid #cbd5e1;padding:5px;text-align:center';
+      let tc = 0, tm = 0, tv = 0;
+      const rows = rowsData.map(r => { tc += r.cartons; tm += r.m2; tv += r.value;
+        return '<tr><td style="' + td + '">' + dateTextOf(r.date) + '</td><td style="' + td + '">' + esc(r.no) + '</td><td style="' + td + '">' + esc(r.code) + '</td><td style="' + td + ';text-align:right">' + esc(r.name) + '</td><td style="' + td + '">' + esc(r.size) + '</td>' +
+          '<td style="' + td + '">' + faNum(r.cartons, 0) + '</td><td style="' + td + '">' + faNum(r.m2) + '</td><td style="' + td + '">' + faNum(r.value) + '</td><td style="' + td + ';text-align:right">' + esc(r.reason) + '</td></tr>'; }).join('');
+      const th = 'border:1px solid #1b2a4a;padding:6px;background:#9b3a2c;color:#fff';
+      const html = '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px">' +
+        receiptHeaderHtml('گزارش شکستگی ماه', null, 'ماه', '', false) +
+        '<div style="margin:10px 2px;font-size:13px">ماه: <b>' + esc(month) + '</b></div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:11px"><thead><tr><th style="' + th + '">تاریخ</th><th style="' + th + '">حواله</th><th style="' + th + '">کد</th><th style="' + th + '">نام طرح</th><th style="' + th + '">سایز</th><th style="' + th + '">کارتن</th><th style="' + th + '">متراژ</th><th style="' + th + '">ارزش</th><th style="' + th + '">دلیل</th></tr></thead>' +
+        '<tbody>' + (rows || '<tr><td colspan="9" style="' + td + '">شکستگی ثبت نشده</td></tr>') + '</tbody>' +
+        '<tfoot><tr style="font-weight:700"><td colspan="5" style="' + td + '">جمع</td><td style="' + td + '">' + faNum(tc, 0) + '</td><td style="' + td + '">' + faNum(tm) + '</td><td style="' + td + '">' + faNum(tv) + '</td><td style="' + td + '"></td></tr></tfoot></table></div>';
+      printHtmlNow(html);
+    }
+
     function printKardex() {
       const col = document.getElementById('kardexColleague')?.value;
       if (!col) { toast('اول همکار را انتخاب کنید'); return; }
@@ -1716,6 +1762,8 @@
       });
       if (!list.length) html += '<p style="text-align:center">کالایی پیدا نشد</p>';
       html += '</div></div>';
+      const prepLine = '<div style="font-size:12px;margin:6px 2px;display:flex;justify-content:space-between"><span>تنظیم‌کننده: <b>' + esc(state.settings.preparer || '-') + '</b></span><span>ساعت: ' + nowTime() + '</span></div>';
+      html = (state.settings.prepPos === 'bottom') ? html + prepLine : prepLine + html;
       document.getElementById('dailyTableWrap').innerHTML = html;
     }
 
@@ -1979,40 +2027,42 @@
     function reportHeaderHtml() {
       return '<div style="background:#1b2a4a;color:#fff;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
         '<div style="width:24%;text-align:center"><img src="' + LOGO_DATA + '" style="height:60px;width:auto;display:block;margin:0 auto" />' +
-          '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">AMIN TILE</div></div>' +
+          '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">' + esc(state.settings.letterLatin || 'AMIN TILE') + '</div></div>' +
         '<div style="flex:1;text-align:center"><div style="font-size:17px;font-weight:700;color:#e9c46a">' + esc((state.settings.headerMain || 'نمایندگی رسمی کاشی امین میبد')) + '</div>' +
           '<div style="font-size:11px;color:#e9c46a;margin-top:4px">' + esc((state.settings.headerSub || 'استان یزد (خالقیه)')) + '</div></div>' +
-        '<div style="width:24%;text-align:center;font-size:11px;line-height:1.8"><div>تاریخ: ' + dateTextOf(null) + '</div><div>ساعت: ' + nowTime() + '</div></div>' +
+        '<div style="width:24%;text-align:center;font-size:11px;line-height:1.8;color:' + (state.settings.dailyColor || '#e9c46a') + '"><div>تاریخ: ' + esc(state.settings.dailyDate || dateTextOf(null)) + '</div><div>ساعت: ' + esc(state.settings.dailyTime || nowTime()) + '</div></div>' +
       '</div>';
     }
-    function receiptHeaderHtml(title, dateIso, dateLabel, timeStr) {
+    function receiptHeaderHtml(title, dateIso, dateLabel, timeStr, showDT) {
       const t = timeStr || nowTime();
-      const mgr = '<div style="font-size:12px;margin:6px 2px 0">مسئول انبار: <b>' + esc(state.settings.manager || '-') + '</b> · ساعت: ' + t + '</div>';
+      const right = showDT === false ? '<div style="width:26%"></div>' :
+        '<div style="width:26%;text-align:center;font-size:11px;line-height:1.8;color:#e9c46a"><div>' + dateLabel + ': ' + dateTextOf(dateIso) + '</div><div>ساعت: ' + t + '</div></div>';
       return '<div style="background:#1b2a4a;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
         '<div style="width:26%;text-align:center"><img src="' + LOGO_DATA + '" style="height:54px;width:auto;display:block;margin:0 auto" />' +
-          '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">AMIN TILE</div></div>' +
+          '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">' + esc(state.settings.letterLatin || 'AMIN TILE') + '</div></div>' +
         '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:700;color:#e9c46a">' + title + '</div>' +
-          '<div style="font-size:11px;color:#c9a227;letter-spacing:1px;margin-top:3px">Yazd Warehouse</div></div>' +
-        '<div style="width:26%;text-align:center;font-size:11px;line-height:1.8;color:#e9c46a"><div>' + dateLabel + ': ' + dateTextOf(dateIso) + '</div><div>ساعت: ' + t + '</div></div>' +
-      '</div>' + mgr;
+          '<div style="font-size:11px;color:#c9a227;letter-spacing:1px;margin-top:3px">' + esc(state.settings.letterSub || 'Yazd Warehouse') + '</div></div>' +
+        right +
+      '</div>';
     }
-    function sigBlock(label, src) {
+    function sigBlock(label, src, name) {
       return '<div style="flex:1;text-align:center"><div style="font-weight:700;font-size:12px">' + label + '</div>' +
+        (name ? '<div style="font-size:11px;color:#333;margin-top:2px">' + esc(name) + '</div>' : '') +
         '<div style="height:60px;display:flex;align-items:center;justify-content:center">' + (src ? '<img src="' + src + '" style="max-height:60px;max-width:100%" />' : '') + '</div>' +
         '<div style="border-top:1px solid #6b7280;margin-top:4px;padding-top:3px;font-size:10px;color:#444">امضا و تاریخ</div></div>';
     }
     function buildReceiptHtml(wb, isLoading = false) {
-      let c = 0, m = 0, kg = 0;
+      let c = 0, m = 0, kg = 0, vsum = 0;
       const rows = (wb.items || []).map(l => {
         const it = state.items.find(i => i.id === l.itemId) || {};
         const m2 = l.cartons * (it.m2PerCarton || 0);
         const w = l.cartons * (it.weightPerCarton || 0);
         const remain = l.cartons - (l.loaded || 0);
-        c += l.cartons; m += m2; kg += w;
+        c += l.cartons; m += m2; kg += w; const lv = m2 * (it.valuePerM2 || 0); vsum += lv;
         const td = 'border:1px solid #cbd5e1;padding:5px;text-align:center';
         return '<tr><td style="' + td + '">' + esc(it.code || '') + '</td><td style="' + td + ';text-align:right">' + esc(it.name || '') + '</td>' +
           '<td style="' + td + '">' + esc(it.size || '') + '</td><td style="' + td + '">' + esc(it.grade || '') + '</td>' +
-          '<td style="' + td + '">' + faNum(l.cartons, 0) + '</td><td style="' + td + '">' + faNum(m2) + '</td><td style="' + td + '">' + faNum(w) + '</td>' +
+          '<td style="' + td + '">' + faNum(l.cartons, 0) + '</td><td style="' + td + '">' + faNum(m2) + '</td><td style="' + td + '">' + faNum(w) + '</td><td style="' + td + '">' + faNum(lv) + '</td>' +
           (isLoading ? '<td style="' + td + '">' + faNum(remain, 0) + '</td><td style="' + td + '">' + faNum(l.loaded || 0, 0) + '</td>' : '') + '</tr>';
       }).join('');
       const th = 'border:1px solid #1b2a4a;padding:6px;background:#2c3e66;color:#fff';
@@ -2020,21 +2070,22 @@
       return '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px;position:relative">' +
         watermarkHtml() +
         '<div style="position:relative;z-index:1">' +
-        receiptHeaderHtml(title, wb.date, 'تاریخ حواله', wb.time) +
-        '<div style="display:flex;justify-content:space-between;margin:10px 2px;font-size:13px"><span>شماره حواله: <b>' + esc(wb.no) + '</b></span><span>تاریخ حواله: <b>' + dateTextOf(wb.date) + '</b></span></div>' +
-        '<div style="font-size:12px;margin:0 2px 8px">مشتری: <b>' + esc(wb.customer || '') + '</b> · تماس: ' + esc(wb.phone || wb.customerTel || '-') + ' · شهر مقصد: ' + esc(wb.city || '-') + (wb.colleague ? ' · همکار: ' + esc(wb.colleague) : '') + '</div>' +
+        receiptHeaderHtml(title, wb.date, 'تاریخ حواله', wb.time, false) +
+        '<div style="display:flex;justify-content:space-between;margin:10px 2px;font-size:13px"><span>شماره حواله: <b>' + esc(wb.no) + '</b></span><span>تاریخ حواله: <b>' + dateTextOf(wb.date) + '</b>' + (wb.time ? ' · ساعت: <b>' + esc(wb.time) + '</b>' : '') + '</span></div>' +
+        '<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;margin:0 2px 8px"><span>مشتری: <b>' + esc(wb.customer || '') + '</b> · تماس: ' + esc(wb.phone || wb.customerTel || '-') + ' · شهر مقصد: ' + esc(wb.city || '-') + (wb.colleague ? ' · همکار: ' + esc(wb.colleague) : '') + '</span><span>تاریخ ثبت: <b>' + dateTextOf(todayISO()) + '</b> · ساعت: <b>' + nowTime() + '</b></span></div>' +
         '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr>' +
           '<th style="' + th + '">کد</th><th style="' + th + '">نام طرح</th><th style="' + th + '">سایز</th><th style="' + th + '">گرید/درجه</th>' +
-          '<th style="' + th + '">کارتن</th><th style="' + th + '">متراژ</th><th style="' + th + '">وزن (کیلو)</th>' +
+          '<th style="' + th + '">کارتن</th><th style="' + th + '">متراژ</th><th style="' + th + '">وزن (کیلو)</th><th style="' + th + '">ارزش</th>' +
           (isLoading ? '<th style="' + th + '">مانده</th><th style="' + th + '">بارگیری</th>' : '') +
           '</tr></thead><tbody>' + rows + '</tbody>' +
-          '<tfoot><tr style="font-weight:700"><td colspan="4" style="border:1px solid #cbd5e1;padding:5px;text-align:center">جمع</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(c, 0) + '</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(m) + '</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(kg) + '</td>' + (isLoading ? '<td colspan="2"></td>' : '') + '</tr></tfoot></table>' +
+          '<tfoot><tr style="font-weight:700"><td colspan="4" style="border:1px solid #cbd5e1;padding:5px;text-align:center">جمع</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(c, 0) + '</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(m) + '</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(kg) + '</td><td style="border:1px solid #cbd5e1;padding:5px;text-align:center">' + faNum(vsum) + '</td>' + (isLoading ? '<td colspan="2"></td>' : '') + '</tr></tfoot></table>' +
         '<div style="margin-top:10px;font-size:12px">راننده: <b>' + esc(wb.driverName || '-') + '</b> · تلفن: ' + esc(wb.driverPhone || '-') + ' · ماشین: ' + esc(wb.driverInfo || '-').replace(/\n/g, ' · ') + '</div>' +
         '<div style="display:flex;gap:20px;margin-top:22px">' +
-          sigBlock('مسئول انبار', state.settings.stockSig || '') +
+          sigBlock('مسئول انبار', state.settings.stockSig || '', state.settings.manager || '') +
           sigBlock('تحویل‌گیرنده (مشتری)', (wb.signatures && wb.signatures.customer) || wb.signCustomer || state.settings.custSig || '') +
         '</div>' +
-        '<div style="margin-top:14px;font-size:10px;color:#555;text-align:center">آدرس انبار: ' + esc(state.settings.address || '-') + (state.settings.phone ? ' · مسئول انبار: ' + esc(state.settings.phone) : '') + '</div>' +
+        (state.settings.receiptFooter ? '<div style="margin-top:10px;padding:8px 10px;border:1px solid #1b2a4a;border-radius:8px;background:' + esc(state.settings.noteBg || '#ffffff') + ';color:' + esc(state.settings.noteColor || '#111111') + ';font-size:12px;white-space:pre-line">' + esc(state.settings.receiptFooter) + '</div>' : '') +
+        '<div style="margin-top:14px;font-size:12px;color:#222;text-align:center;font-weight:600">آدرس انبار: ' + esc(state.settings.address || '-') + (state.settings.phone ? ' · تلفن: ' + esc(state.settings.phone) : '') + '</div>' +
         '</div></div>';
     }
     function buildIncomingHtml(rec) {
@@ -2052,7 +2103,7 @@
       return '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px;position:relative">' +
         watermarkHtml() +
         '<div style="position:relative;z-index:1">' +
-        receiptHeaderHtml('حواله ورودی', rec.date, 'تاریخ حواله', rec.time) +
+        receiptHeaderHtml('حواله ورودی', rec.date, 'تاریخ حواله', rec.time, false) +
         '<div style="display:flex;justify-content:space-between;margin:10px 2px;font-size:13px"><span>شماره حواله: <b>' + esc(rec.no || '-') + '</b></span><span>تاریخ حواله: <b>' + dateTextOf(rec.date) + '</b></span></div>' +
         '<div style="font-size:12px;margin:0 2px 8px">شرکت / تأمین‌کننده: <b>' + esc(rec.supplier || '-') + '</b></div>' +
         '<table style="width:100%;border-collapse:collapse;font-size:11.5px"><thead><tr>' +
@@ -2062,7 +2113,7 @@
         '<div style="margin-top:10px;font-size:12px">راننده و ماشین: ' + esc(rec.driver || '-') + '</div>' +
         (rec.notes ? '<div style="margin-top:4px;font-size:12px">توضیح: ' + esc(rec.notes) + '</div>' : '') +
         '<div style="display:flex;gap:20px;margin-top:22px">' +
-          sigBlock('مسئول انبار', state.settings.stockSig || '') +
+          sigBlock('مسئول انبار', state.settings.stockSig || '', state.settings.manager || '') +
           sigBlock('تحویل‌دهنده (شرکت)', '') +
         '</div>' +
         '</div></div>';
@@ -2274,8 +2325,6 @@
     }
 
     function printHtmlNow(html) {
-      const top = '<div style="font-size:11px;color:#444;display:flex;justify-content:space-between;margin-bottom:6px"><span>مسئول انبار: <b>' + esc(state.settings.manager || '-') + '</b></span><span>ساعت: ' + nowTime() + '</span></div>';
-      html = top + html;
       let st = document.getElementById('printCss');
       if (!st) { st = document.createElement('style'); st.id = 'printCss'; document.head.appendChild(st); }
       st.textContent = '@media print {' +
@@ -2515,6 +2564,15 @@
       state.settings.calendar = document.getElementById('setCalendar')?.value || 'shamsi';
       state.settings.headerMain = (document.getElementById('setHeaderMain')?.value || '').trim();
       state.settings.headerSub = (document.getElementById('setHeaderSub')?.value || '').trim();
+      state.settings.dailyDate = document.getElementById('setDailyDate')?.value.trim() || '';
+      state.settings.dailyTime = document.getElementById('setDailyTime')?.value.trim() || '';
+      state.settings.dailyColor = document.getElementById('setDailyColor')?.value || '#e9c46a';
+      state.settings.prepPos = document.getElementById('setPrepPos')?.value || 'top';
+      state.settings.receiptFooter = document.getElementById('setFooter')?.value.trim() || '';
+      state.settings.noteColor = document.getElementById('setNoteColor')?.value || '#111111';
+      state.settings.noteBg = document.getElementById('setNoteBg')?.value || '#ffffff';
+      state.settings.letterLatin = document.getElementById('setLetterLatin')?.value.trim() || '';
+      state.settings.letterSub = document.getElementById('setLetterSub')?.value.trim() || '';
       state.settings.manager = (document.getElementById('setManager')?.value || '').trim();
       state.settings.keeper1 = (document.getElementById('setKeeper1')?.value || '').trim();
       state.settings.keeper2 = (document.getElementById('setKeeper2')?.value || '').trim();
@@ -2542,7 +2600,7 @@
       { const sd = document.getElementById('setDigits'); if (sd) sd.value = (state.settings && state.settings.digits) || 'fa'; }
       { const sc = document.getElementById('setCalendar'); if (sc) sc.value = (state.settings && state.settings.calendar) || 'shamsi'; }
       { const sm = document.getElementById('setManager'); if (sm) sm.value = state.settings.manager || ''; const k1 = document.getElementById('setKeeper1'); if (k1) k1.value = state.settings.keeper1 || ''; const k2 = document.getElementById('setKeeper2'); if (k2) k2.value = state.settings.keeper2 || ''; }
-      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; }
+      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
       document.getElementById('setMap').value = state.settings.mapLink || '';
       { const sw = document.getElementById('setWebhook'); if (sw) sw.value = state.settings.webhookUrl || ''; }
       document.getElementById('setAddress').value = state.settings.address || '';
