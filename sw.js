@@ -1,4 +1,4 @@
-const CACHE = 'amin-install-20';
+const CACHE = 'amin-install-26';
 const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
@@ -15,6 +15,8 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  if (url.origin !== self.location.origin) return;
   e.respondWith(
     fetch(e.request)
       .then((res) => {
@@ -24,6 +26,6 @@ self.addEventListener('fetch', (e) => {
         }
         return res;
       })
-      .catch(() => caches.match(e.request).then((m) => m || caches.match('./index.html')))
+      .catch(() => caches.match(e.request).then((m) => m || (e.request.mode === 'navigate' ? caches.match('./index.html') : new Response('', { status: 504 }))))
   );
 });
