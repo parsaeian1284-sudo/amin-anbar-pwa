@@ -468,6 +468,7 @@
           <button class="btn btn-outline btn-sm" onclick="showMore('shift')">ساعت کار انباردارها</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('book')">دفترچه تلفن</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('import')">وارد کردن حواله از فایل</button>
+          <button class="btn btn-outline btn-sm" onclick="showMore('pick')">موجودی طرح‌های انتخابی</button>
           <button class="btn btn-outline btn-sm" onclick="printBreakage()">گزارش شکستگی ماه</button>
         </div>
       </div>
@@ -484,6 +485,16 @@
           <button class="btn btn-primary btn-block" onclick="saveBookEntry()">ذخیره شماره</button>
         </div>
         <div class="card"><div id="bookList"></div></div>
+      </div>
+
+      <div id="more-pick" class="more-part" style="display:none">
+        <div class="card">
+          <h3>موجودی طرح‌های انتخابی</h3>
+          <input id="pickSearch" placeholder="جستجوی نام یا کد" oninput="renderPick()" />
+          <div style="display:flex;gap:6px;margin:6px 0"><button class="btn btn-outline btn-sm" onclick="pickAll(true)">انتخاب همه</button><button class="btn btn-outline btn-sm" onclick="pickAll(false)">پاک کردن انتخاب</button></div>
+          <div id="pickList" style="max-height:320px;overflow:auto"></div>
+          <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="pickPrint()">نمایش / چاپ / PDF موجودی انتخابی</button>
+        </div>
       </div>
 
       <div id="more-import" class="more-part" style="display:none">
@@ -601,6 +612,14 @@
         <label>امضا یا مهر تنظیم‌کننده (فایل PNG شفاف، اختیاری)</label>
         <input id="setPrepSig" type="file" accept="image/png" onchange="savePrepSig(this)" />
         <div id="prepSigState" style="font-size:12px;color:#444"></div>
+        <label>لوگوی کم‌رنگ پایین صفحه گزارش روزانه و حواله (PNG)</label>
+        <input id="setFootLogo" type="file" accept="image/png" onchange="saveFootLogo(this)" />
+        <label>میزان کم‌رنگی لوگو (درصد)</label><input id="setFootOpacity" type="range" min="5" max="60" value="15" />
+        <label>ترتیب سایزها در گزارش موجودی (هر سایز در یک خط، از بالا به پایین)</label>
+        <textarea id="setSizeOrder" rows="5" placeholder="30×30&#10;60×60&#10;60×120"></textarea>
+        <label>تغییر سایز همه کالاها: سایز فعلی</label><input id="setSizeFrom" placeholder="مثلاً 120×60" />
+        <label>سایز درست</label><input id="setSizeTo" placeholder="مثلاً 60×120" />
+        <button class="btn btn-outline btn-block" onclick="renameSizes()">اعمال روی همه کالاهای این سایز</button>
         <label>امضای مسئول انبار (یک بار ذخیره می‌شود)</label>
         <input id="setStockSig" type="file" accept="image/*" onchange="saveStockSig(this)" />
         <label>امضای دیجیتال تحویل‌گیرنده (اختیاری، برای رسید)</label>
@@ -839,7 +858,7 @@
     function handleExcelImport(e) {
       const file = e.target.files[0];
       if (!file) return;
-      if (!confirm('ورود فایل جدید، تمام موجودی و حواله‌های قبلی را پاک می‌کند. ادامه می‌دهید؟')) {
+      if (!confirm('موجودی با فایل جدید به‌روز می‌شود؛ کالاهای جدید اضافه و حواله‌ها حفظ می‌شوند. ادامه می‌دهید؟')) {
         e.target.value = '';
         return;
       }
@@ -907,8 +926,10 @@
             });
           });
 
-          state.items = items;
-          state.waybills = [];
+          const oldItems = state.items || [];
+          items.forEach(ni => { const o = oldItems.find(x => String(x.code) === String(ni.code)); if (o) ni.id = o.id; });
+          const keptOld = oldItems.filter(o => !items.some(ni => String(ni.code) === String(o.code)));
+          state.items = items.concat(keptOld);
           state.incomings = [];
           saveState();
           renderAll();
@@ -1657,6 +1678,56 @@
       toast('حواله‌ها ثبت شدند');
     }
 
+
+    function renderPick() {
+      const q = (document.getElementById('pickSearch')?.value || '').trim().toLowerCase();
+      const prev = new Set(window._pickSel || []);
+      const rows = state.items.filter(i => !q || (String(i.code) + ' ' + i.name + ' ' + i.size).toLowerCase().includes(q)).map(i =>
+        '<label style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #eee"><input type="checkbox" class="pk" value="' + esc(i.id) + '" ' + (prev.has(i.id) ? 'checked' : '') + ' onchange="pickSync()" /> ' + esc(String(i.code)) + ' · ' + esc(i.name) + ' · ' + esc(i.size) + '</label>').join('');
+      document.getElementById('pickList').innerHTML = rows || '<div class="muted">کالایی نیست</div>';
+      pickSync();
+    }
+    function pickSync() { window._pickSel = [...document.querySelectorAll('.pk:checked')].map(x => x.value); }
+    function pickAll(v) { document.querySelectorAll('.pk').forEach(x => x.checked = v); pickSync(); }
+    function pickPrint() {
+      pickSync();
+      const ids = window._pickSel || [];
+      if (!ids.length) { toast('حداقل یک کالا را علامت بزنید'); return; }
+      const items = state.items.filter(i => ids.includes(i.id));
+      const td = 'border:1px solid #cbd5e1;padding:6px;text-align:center';
+      let tm = 0, tc = 0;
+      const rows = items.map(i => { tm += i.stockM2 || 0; const c = i.m2PerCarton > 0 ? (i.stockM2 || 0) / i.m2PerCarton : 0; tc += c;
+        return '<tr><td style="' + td + '">' + esc(String(i.code)) + '</td><td style="' + td + ';text-align:right">' + esc(i.name) + '</td><td style="' + td + '">' + esc(i.size) + '</td><td style="' + td + '">' + esc(i.grade || '') + '</td>' +
+          '<td style="' + td + ';font-weight:700">' + faNum(i.stockM2 || 0) + '</td><td style="' + td + '">' + fmtC(c) + '</td></tr>'; }).join('');
+      const th = 'border:1px solid #1b2a4a;padding:6px;background:#9b3a2c;color:#fff';
+      const html = '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px">' +
+        receiptHeaderHtml('موجودی طرح‌های انتخابی', todayISO(), 'تاریخ', null, true) +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:10px"><thead><tr><th style="' + th + '">کد</th><th style="' + th + '">نام طرح</th><th style="' + th + '">سایز</th><th style="' + th + '">گرید</th><th style="' + th + '">موجودی (متر)</th><th style="' + th + '">کارتن (تقریبی)</th></tr></thead>' +
+        '<tbody>' + rows + '</tbody><tfoot><tr style="font-weight:700"><td colspan="4" style="' + td + '">جمع</td><td style="' + td + '">' + faNum(tm) + '</td><td style="' + td + '">' + fmtC(tc) + '</td></tr></tfoot></table>' + footLogoHtml() + '</div>';
+      printHtmlNow(html);
+    }
+    function footLogoHtml() {
+      if (!state.settings.footLogo) return '';
+      const op = Math.max(0.05, Math.min(0.6, (Number(state.settings.footOpacity) || 15) / 100));
+      return '<div style="text-align:center;margin-top:26px"><img src="' + state.settings.footLogo + '" style="width:55%;max-width:340px;opacity:' + op + '" /></div>';
+    }
+    function saveFootLogo(input) {
+      const f = input.files && input.files[0];
+      if (!f) return;
+      const url = URL.createObjectURL(f);
+      const img = new Image();
+      img.onload = () => {
+        const sc = Math.min(1, 600 / Math.max(img.width, img.height));
+        const c = document.createElement('canvas');
+        c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+        state.settings.footLogo = c.toDataURL('image/png');
+        URL.revokeObjectURL(url); saveState(); toast('لوگوی پایین صفحه ذخیره شد');
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); toast('فایل خوانده نشد'); };
+      img.src = url;
+    }
+
     function printBreakage() {
       const month = (prompt('ماه گزارش شکستگی (مثلاً 2026-11)', new Date().toISOString().slice(0, 7)) || '').trim();
       if (!month) return;
@@ -1834,6 +1905,26 @@
       img.onerror = () => { URL.revokeObjectURL(url); toast('فایل خوانده نشد'); };
       img.src = url;
     }
+
+    function normSize(s) { return String(s || '').replace(/[*xX]/g, '×').replace(/\s+/g, '').trim(); }
+    function sortSizes(list) {
+      const order = (state.settings.sizeOrder || []).map(normSize);
+      return [...list].sort((a, b) => {
+        const ia = order.indexOf(normSize(a)), ib = order.indexOf(normSize(b));
+        if (ia !== -1 || ib !== -1) return (ia === -1 ? 1e9 : ia) - (ib === -1 ? 1e9 : ib);
+        return String(a).localeCompare(String(b));
+      });
+    }
+    function renameSizes() {
+      const from = normSize(document.getElementById('setSizeFrom')?.value);
+      const to = normSize(document.getElementById('setSizeTo')?.value);
+      if (!from || !to) { toast('هر دو سایز را وارد کنید'); return; }
+      let n = 0;
+      state.items.forEach(i => { if (normSize(i.size) === from) { i.size = to; n++; } });
+      saveState(); renderAll();
+      toast(n ? faNum(n, 0) + ' کالا به سایز ' + to + ' تغییر کرد' : 'کالایی با این سایز پیدا نشد');
+    }
+
     function renderDaily() {
       const from = parseFloat(document.getElementById('dailyFrom').value);
       const to = parseFloat(document.getElementById('dailyTo').value);
@@ -1873,7 +1964,7 @@
         const blist = list.filter(i => keyOf(i) === b);
         const bySize = {};
         blist.forEach(i => { const s = i.size || 'نامشخص'; (bySize[s] = bySize[s] || []).push(i); });
-        const sizes = Object.keys(bySize).sort();
+        const sizes = sortSizes(Object.keys(bySize));
         const bTotal = blist.reduce((s, i) => s + i.stockM2, 0);
         const brk = pageBreak && bi > 0 ? 'page-break-before:always;' : '';
         const PC = '-webkit-print-color-adjust:exact;print-color-adjust:exact;';
@@ -1908,6 +1999,7 @@
       const prepWho = state.settings.prepSig ? '<img src="' + state.settings.prepSig + '" style="height:46px;width:auto;vertical-align:middle" />' : '<b>' + esc(state.settings.preparer || '-') + '</b>';
       const prepLine = '<div style="font-size:12px;margin:6px 2px;display:flex;justify-content:space-between;align-items:center"><span>تنظیم‌کننده: ' + prepWho + '</span><span>ساعت: ' + nowTime() + '</span></div>';
       html = (state.settings.prepPos === 'bottom') ? html + prepLine : prepLine + html;
+      html += footLogoHtml();
       document.getElementById('dailyTableWrap').innerHTML = html;
     }
 
@@ -2230,7 +2322,7 @@
         '</div>' +
         (state.settings.receiptFooter ? '<div style="margin-top:10px;padding:8px 10px;border:1px solid #1b2a4a;border-radius:8px;background:' + esc(state.settings.noteBg || '#ffffff') + ';color:' + esc(state.settings.noteColor || '#111111') + ';font-size:12px;white-space:pre-line">' + esc(state.settings.receiptFooter) + '</div>' : '') +
         '<div style="margin-top:14px;font-size:12px;color:#222;text-align:center;font-weight:600">آدرس انبار: ' + esc(state.settings.address || '-') + (state.settings.phone ? ' · تلفن: ' + esc(state.settings.phone) : '') + '</div>' +
-        '</div></div>';
+        footLogoHtml() + '</div></div>';
     }
     function buildIncomingHtml(rec) {
       let c = 0, m = 0;
@@ -2264,9 +2356,10 @@
     }
 
     function showMore(which) {
-      ['recon','cash','shift','book','import'].forEach(k => { const el = document.getElementById('more-' + k); if (el) el.style.display = k === which ? 'block' : 'none'; });
+      ['recon','cash','shift','book','import','pick'].forEach(k => { const el = document.getElementById('more-' + k); if (el) el.style.display = k === which ? 'block' : 'none'; });
       if (which === 'cash') renderCash();
       if (which === 'shift') renderShifts();
+      if (which === 'pick') renderPick();
     }
     function saveBookEntry() {
       const type = document.getElementById('bookType').value;
@@ -2296,7 +2389,7 @@
       Object.keys(book.colleagues || {}).forEach(n => { cols[n] = cols[n] || { phone: '' }; if (book.colleagues[n].phone) cols[n].phone = book.colleagues[n].phone; });
       const hit = (n, extra) => !q || String(n).toLowerCase().includes(q) || String(extra || '').toLowerCase().includes(q);
       const rowHtml = (name, phone, extra) => '<div style="display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-bottom:1px solid #e5e7eb"><div><b>' + esc(name) + '</b>' + (extra ? '<div style="font-size:12px;color:#555">' + esc(extra) + '</div>' : '') + '</div>' +
-        '<div style="text-align:left;white-space:nowrap">' + (phone ? '<a href="tel:' + esc(phone) + '" style="text-decoration:none;font-weight:700">📱 ' + esc(phone) + '</a>' : '<span style="color:#999">بدون شماره</span>') + '</div></div>';
+        '<div style="text-align:left;white-space:nowrap">' + (phone ? '<a href="tel:' + esc(phone) + '" style="text-decoration:none;font-weight:700">📱 ' + esc(phone) + '</a>' : '<span style="color:#999">بدون شماره</span>') + footLogoHtml() + '</div></div>';
       let html = '<h4 style="margin:6px 0;color:#1b2a4a">رانندگان</h4>';
       Object.keys(drivers).sort().forEach(n => {
         const cities = [...drivers[n].cities].join('، ');
@@ -2712,6 +2805,8 @@
       state.settings.dailyTime = document.getElementById('setDailyTime')?.value.trim() || '';
       state.settings.dailyColor = document.getElementById('setDailyColor')?.value || '#e9c46a';
       state.settings.prepPos = document.getElementById('setPrepPos')?.value || 'top';
+      state.settings.footOpacity = Number(document.getElementById('setFootOpacity')?.value) || 15;
+      state.settings.sizeOrder = (document.getElementById('setSizeOrder')?.value || '').split('\n').map(normSize).filter(Boolean);
       state.settings.receiptFooter = document.getElementById('setFooter')?.value.trim() || '';
       state.settings.noteColor = document.getElementById('setNoteColor')?.value || '#111111';
       state.settings.noteBg = document.getElementById('setNoteBg')?.value || '#ffffff';
@@ -2744,7 +2839,7 @@
       { const sd = document.getElementById('setDigits'); if (sd) sd.value = (state.settings && state.settings.digits) || 'fa'; }
       { const sc = document.getElementById('setCalendar'); if (sc) sc.value = (state.settings && state.settings.calendar) || 'shamsi'; }
       { const sm = document.getElementById('setManager'); if (sm) sm.value = state.settings.manager || ''; const k1 = document.getElementById('setKeeper1'); if (k1) k1.value = state.settings.keeper1 || ''; const k2 = document.getElementById('setKeeper2'); if (k2) k2.value = state.settings.keeper2 || ''; }
-      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
+      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const fo = document.getElementById('setFootOpacity'); if (fo) fo.value = state.settings.footOpacity || 15; const so = document.getElementById('setSizeOrder'); if (so) so.value = (state.settings.sizeOrder || []).join('\n'); const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
       document.getElementById('setMap').value = state.settings.mapLink || '';
       { const sw = document.getElementById('setWebhook'); if (sw) sw.value = state.settings.webhookUrl || ''; }
       document.getElementById('setAddress').value = state.settings.address || '';
