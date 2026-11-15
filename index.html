@@ -863,6 +863,16 @@
     function getBrand(desc) { return 'سایر'; }
 
     // ==================== EXCEL IMPORT ====================
+    function pickCol(row, names) {
+      const norm = s => String(s || '').replace(/[\s\u200c\u200d\u200e\u200f\/\\_\-]/g, '').toLowerCase();
+      const want = names.map(norm);
+      const keys = Object.keys(row);
+      for (const w of want) {
+        const k = keys.find(x => norm(x) === w);
+        if (k !== undefined && row[k] !== undefined && row[k] !== null && String(row[k]).trim() !== '') return row[k];
+      }
+      return '';
+    }
     function numFa(v) {
       return String(v ?? 0).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/٫/g, '.').replace(/[,،٬]/g, '');
     }
@@ -911,7 +921,7 @@
             if (!code || !name) return; // skip summary rows
 
             let size = String(row['سایز'] ?? row['size'] ?? '').replace(/\*/g, '×').trim();
-            let gradeRaw = row['گرید / درجه'] ?? row['گرید'] ?? row['درجه'] ?? '';
+            let gradeRaw = pickCol(row, ['گرید / درجه', 'گرید', 'درجه', 'grade']);
             let grade = numFa(gradeRaw).trim();
             if (/^\d+(\.0+)?$/.test(grade)) grade = String(parseInt(grade, 10));
 
