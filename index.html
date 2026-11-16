@@ -615,6 +615,7 @@
         <label>نوع فونت</label><select id="setFontFamily"><option value="Vazirmatn, Tahoma, sans-serif">Vazirmatn (پیش‌فرض)</option><option value="Tahoma, sans-serif">Tahoma</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Georgia, serif">Georgia</option></select>
         <label>اندازه فونت (پیکسل)</label><input id="setFontSize" type="number" min="10" max="22" value="14" />
         <label>رنگ نوشته‌ها</label><input id="setFontColor" type="color" value="#111111" />
+        <label>رنگ نوشته‌های سربرگ اصلی برنامه (بالای صفحه، جدا از بقیه)</label><input id="setAppHeaderColor" type="color" value="#ffffff" />
         <div style="font-weight:700;margin-top:10px">فونت و رنگ جدول‌ها (رسید، موجودی روزانه)</div>
         <label>نوع فونت جدول</label><select id="setTblFam"><option value="Vazirmatn, Tahoma, sans-serif">Vazirmatn</option><option value="Tahoma, Arial, sans-serif">Tahoma</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="'Courier New', monospace">Courier New</option></select>
         <label>اندازه فونت جدول (پیکسل)</label><input id="setTblSize" type="number" min="8" max="20" step="0.5" value="11.5" />
@@ -1844,6 +1845,7 @@
       st.textContent = 'body, input, select, textarea, button, label, td, th, div, span { font-family: ' + fam + ' !important; color: ' + col + '; } body { font-size: ' + size + 'px; }';
       st.textContent += tblCss();
       st.textContent += '.lh, .lh * { color: ' + (state.settings.letterColor || '#e9c46a') + ' !important; }';
+      st.textContent += '.header-title, .header-title * { color: ' + (state.settings.appHeaderColor || '#ffffff') + ' !important; }';
     }
     function saveFontSettings() {
       state.settings.font = {
@@ -1852,6 +1854,7 @@
         color: document.getElementById('setFontColor')?.value || '#111111'
       };
       state.settings.tbl = { family: document.getElementById('setTblFam')?.value || 'Vazirmatn, Tahoma, sans-serif', size: Number(document.getElementById('setTblSize')?.value) || 11.5, weight: document.getElementById('setTblWeight')?.value || '400', color: document.getElementById('setTblColor')?.value || '#111111', headWeight: document.getElementById('setTblHeadWeight')?.value || '700', headColor: document.getElementById('setTblHeadColor')?.value || '#ffffff', headBg: document.getElementById('setTblHeadBg')?.value || '#9b3a2c' };
+      state.settings.appHeaderColor = document.getElementById('setAppHeaderColor')?.value || '#ffffff';
       state.settings.letterColor = document.getElementById('setLetterColor')?.value || '#e9c46a';
       saveState(); applyFont(); toast('تنظیمات فونت ذخیره شد');
     }
@@ -2856,6 +2859,7 @@
         ' tr { page-break-inside: avoid; } }';
       st.textContent += tblCss();
       st.textContent += '.lh, .lh * { color: ' + (state.settings.letterColor || '#e9c46a') + ' !important; }';
+      st.textContent += '.header-title, .header-title * { color: ' + (state.settings.appHeaderColor || '#ffffff') + ' !important; }';
       const el = document.getElementById('receipt');
       el.innerHTML = '<div class="bw">' + html + '</div>';
       el.style.display = 'block';
@@ -3129,7 +3133,7 @@
       { const sd = document.getElementById('setDigits'); if (sd) sd.value = (state.settings && state.settings.digits) || 'fa'; }
       { const sc = document.getElementById('setCalendar'); if (sc) sc.value = (state.settings && state.settings.calendar) || 'shamsi'; }
       { const sm = document.getElementById('setManager'); if (sm) sm.value = state.settings.manager || ''; const k1 = document.getElementById('setKeeper1'); if (k1) k1.value = state.settings.keeper1 || ''; const k2 = document.getElementById('setKeeper2'); if (k2) k2.value = state.settings.keeper2 || ''; }
-      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const lcol = document.getElementById('setLetterColor'); if (lcol) lcol.value = state.settings.letterColor || '#e9c46a'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const fo = document.getElementById('setFootOpacity'); if (fo) fo.value = state.settings.footOpacity || 15; storageInfo(); const so = document.getElementById('setSizeOrder'); if (so) so.value = (state.settings.sizeOrder || []).join('\n'); renderColsBoxes(); { const f = state.settings.font || {}; const ff = document.getElementById('setFontFamily'); if (ff) ff.value = f.family || 'Vazirmatn, Tahoma, sans-serif'; const fs = document.getElementById('setFontSize'); if (fs) fs.value = f.size || 14; const fc = document.getElementById('setFontColor'); if (fc) fc.value = f.color || '#111111'; } const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
+      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const lcol = document.getElementById('setLetterColor'); if (lcol) lcol.value = state.settings.letterColor || '#e9c46a'; const ahc = document.getElementById('setAppHeaderColor'); if (ahc) ahc.value = state.settings.appHeaderColor || '#ffffff'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const fo = document.getElementById('setFootOpacity'); if (fo) fo.value = state.settings.footOpacity || 15; storageInfo(); const so = document.getElementById('setSizeOrder'); if (so) so.value = (state.settings.sizeOrder || []).join('\n'); renderColsBoxes(); { const f = state.settings.font || {}; const ff = document.getElementById('setFontFamily'); if (ff) ff.value = f.family || 'Vazirmatn, Tahoma, sans-serif'; const fs = document.getElementById('setFontSize'); if (fs) fs.value = f.size || 14; const fc = document.getElementById('setFontColor'); if (fc) fc.value = f.color || '#111111'; } const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
       document.getElementById('setMap').value = state.settings.mapLink || '';
       { const sw = document.getElementById('setWebhook'); if (sw) sw.value = state.settings.webhookUrl || ''; }
       document.getElementById('setAddress').value = state.settings.address || '';
