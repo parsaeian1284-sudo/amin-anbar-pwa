@@ -1802,16 +1802,23 @@
     function saveFootLogo(input) {
       const f = input.files && input.files[0];
       if (!f) return;
-      input.__done = true; setTimeout(() => { input.value = ''; }, 0);
       const url = URL.createObjectURL(f);
       const img = new Image();
       img.onload = () => {
-        const sc = Math.min(1, 360 / Math.max(img.width, img.height));
+        const sc = Math.min(1, 420 / Math.max(img.width, img.height));
         const c = document.createElement('canvas');
-        c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        state.settings.footLogo = c.toDataURL('image/jpeg', 0.82);
-        URL.revokeObjectURL(url); saveState(); input.value = ''; toast('لوگوی پایین صفحه ذخیره شد'); storageInfo();
+        c.width = Math.max(1, Math.round(img.width * sc)); c.height = Math.max(1, Math.round(img.height * sc));
+        const ctx = c.getContext('2d');
+        ctx.drawImage(img, 0, 0, c.width, c.height);
+        const data = ctx.getImageData(0, 0, c.width, c.height);
+        const px = data.data;
+        for (let k = 0; k < px.length; k += 4) {
+          const mn = Math.min(px[k], px[k + 1], px[k + 2]);
+          px[k + 3] = Math.max(0, Math.min(255, (248 - mn) * 3.2));
+        }
+        ctx.putImageData(data, 0, 0);
+        state.settings.footLogo = c.toDataURL('image/png');
+        URL.revokeObjectURL(url); saveState(); input.value = ''; toast('لوگوی پایین صفحه ذخیره شد (پس‌زمینه سفید حذف شد)'); storageInfo();
       };
       img.onerror = () => { URL.revokeObjectURL(url); toast('فایل خوانده نشد'); };
       img.src = url;
@@ -2854,6 +2861,7 @@
       st.textContent = '@media print { body, #receipt { color: ' + ((state.settings.font && state.settings.font.color) || '#111111') + ' !important; font-family: ' + ((state.settings.font && state.settings.font.family) || 'Vazirmatn, Tahoma, sans-serif') + ' !important; font-size: ' + ((state.settings.font && state.settings.font.size) || 14) + 'px !important; }' +
         ' body > *:not(#receipt) { display: none !important; }' +
         ' #receipt { display: block !important; position: static !important; width: 100% !important; background: #fff !important; }' +
+        ' #receipt .bw, #receipt .bw > div { background: #fff !important; } #receipt img { background: transparent !important; }' +
                                         ' #receipt img.wm { opacity: 0.22 !important; filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; }' +' @page { size: A4; margin: 10mm; }' +
         ' * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }' +
         ' tr { page-break-inside: avoid; } }';
