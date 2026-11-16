@@ -450,6 +450,7 @@
             </label>
           </div>
         </div>
+        <div class="card" style="margin:8px 0"><label>توضیحات دستی این روز (در گزارش موجودی روزانه چاپ می‌شود)</label><textarea id="dayNote" rows="3" placeholder="مثلاً: امروز بارگیری کند بود، ماشین نرسید..." oninput="saveDayNote()"></textarea></div>
         <div class="stats" id="dailyStats"></div>
         <div class="table-wrap" id="dailyTableWrap"></div>
         <div class="row" style="margin-top:10px">
@@ -470,6 +471,7 @@
           <button class="btn btn-outline btn-sm" onclick="showMore('import')">وارد کردن حواله از فایل</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('pick')">موجودی طرح‌های انتخابی</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('sizeref')">مشخصات سایزها</button>
+          <button class="btn btn-outline btn-sm" onclick="showMore('returns')">برگشتی مشتری</button>
           <button class="btn btn-outline btn-sm" onclick="printBreakage()">گزارش شکستگی ماه</button>
         </div>
       </div>
@@ -504,6 +506,19 @@
           <select id="sizeRefSel" onchange="sizeRefRender()"><option value="">همه سایزها</option></select>
           <div id="sizeRefOut" style="margin-top:6px"></div>
           <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="sizeRefPrint()">چاپ / PDF مشخصات سایزها</button>
+        </div>
+      </div>
+
+      <div id="more-returns" class="more-part" style="display:none">
+        <div class="card">
+          <h3>برگشتی مشتری</h3>
+          <label>شماره حواله خروجی</label><input id="retRef" placeholder="مثلاً 7788" />
+          <label>کد کالا</label><input id="retCode" placeholder="مثلاً 960905" />
+          <div class="row"><div><label>تعداد</label><input id="retQty" type="number" step="0.01" /></div>
+          <div><label>واحد</label><select id="retUnit"><option value="carton">کارتن</option><option value="m2">متراژ</option><option value="sheet">برگ</option></select></div></div>
+          <label>دلیل برگشت</label><input id="retReason" placeholder="مثلاً شکستگی، اضافه" />
+          <button class="btn btn-primary btn-block" onclick="addReturn()">ثبت برگشتی</button>
+          <div id="retList" style="margin-top:10px"></div>
         </div>
       </div>
 
@@ -573,6 +588,7 @@
         </div>
         <div class="card">
           <label>گزارش روز</label><input type="date" id="shiftReportDate" onchange="renderShifts()" />
+           <label style="margin-top:8px">یادداشت این روز (در گزارش کار انبار چاپ می‌شود)</label><textarea id="shiftNote" rows="3" oninput="saveShiftNote()"></textarea>
           <div id="shiftList" style="margin-top:8px"></div>
           <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="printShiftDay()">گزارش پایان روز (چاپ / PDF)</button>
         </div>
@@ -595,6 +611,19 @@
         <textarea id="setAddress" rows="2"></textarea>
         <label>نام تنظیم‌کننده</label>
         <input id="setPreparer" value="Parsaeian" />
+        <label style="font-weight:700;margin-top:8px">فونت و نوشته‌ها</label>
+        <label>نوع فونت</label><select id="setFontFamily"><option value="Vazirmatn, Tahoma, sans-serif">Vazirmatn (پیش‌فرض)</option><option value="Tahoma, sans-serif">Tahoma</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="Georgia, serif">Georgia</option></select>
+        <label>اندازه فونت (پیکسل)</label><input id="setFontSize" type="number" min="10" max="22" value="14" />
+        <label>رنگ نوشته‌ها</label><input id="setFontColor" type="color" value="#111111" />
+        <div style="font-weight:700;margin-top:10px">فونت و رنگ جدول‌ها (رسید، موجودی روزانه)</div>
+        <label>نوع فونت جدول</label><select id="setTblFam"><option value="Vazirmatn, Tahoma, sans-serif">Vazirmatn</option><option value="Tahoma, Arial, sans-serif">Tahoma</option><option value="Arial, sans-serif">Arial</option><option value="'Times New Roman', serif">Times New Roman</option><option value="'Courier New', monospace">Courier New</option></select>
+        <label>اندازه فونت جدول (پیکسل)</label><input id="setTblSize" type="number" min="8" max="20" step="0.5" value="11.5" />
+        <label>ضخامت نوشته جدول</label><select id="setTblWeight"><option value="300">کم‌رنگ</option><option value="400">معمولی</option><option value="600">نیمه‌پررنگ</option><option value="700">پررنگ</option></select>
+        <label>رنگ نوشته جدول</label><input id="setTblColor" type="color" value="#111111" />
+        <label>ضخامت نوشته ردیف عنوان</label><select id="setTblHeadWeight"><option value="400">معمولی</option><option value="700" selected>پررنگ</option></select>
+        <label>رنگ نوشته ردیف عنوان</label><input id="setTblHeadColor" type="color" value="#ffffff" />
+        <label>رنگ زمینه ردیف عنوان</label><input id="setTblHeadBg" type="color" value="#9b3a2c" />
+        <button class="btn btn-outline btn-block" onclick="saveFontSettings()">اعمال فونت</button>
         <label>📱 شماره موبایل مسئول انبار</label>
         <input id="setPhone" placeholder="شماره مسئول انبار (روی سربرگ و رسید چاپ می‌شود)" />
         <label>توضیحات زیر حواله (چند خطی، روی رسید چاپ می‌شود)</label>
@@ -620,10 +649,10 @@
         <label>رنگ نوشته‌های تاریخ و ساعت موجودی روزانه</label><input id="setDailyColor" type="color" value="#e9c46a" />
         <label>نام تنظیم‌کننده در موجودی روزانه: بالا یا پایین گزارش</label><select id="setPrepPos"><option value="top">بالای گزارش</option><option value="bottom">پایین گزارش</option></select>
         <label>امضا یا مهر تنظیم‌کننده (فایل PNG شفاف، اختیاری)</label>
-        <input id="setPrepSig" type="file" accept="image/png" onchange="savePrepSig(this)" />
+        <input id="setPrepSig" type="file" accept="image/png" onchange="savePrepSig(this)" /><button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="clearImg('prepSig')">حذف این تصویر</button>
         <div id="prepSigState" style="font-size:12px;color:#444"></div>
         <label>لوگوی کم‌رنگ پایین صفحه گزارش روزانه و حواله (PNG)</label>
-        <input id="setFootLogo" type="file" accept="image/png" onchange="saveFootLogo(this)" />
+        <input id="setFootLogo" type="file" accept="image/png" onchange="saveFootLogo(this)" /><button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="clearImg('footLogo')">حذف این تصویر</button>
         <label>میزان کم‌رنگی لوگو (درصد)</label><input id="setFootOpacity" type="range" min="5" max="60" value="15" />
         <label>ترتیب سایزها در گزارش موجودی (هر سایز در یک خط، از بالا به پایین)</label>
         <textarea id="setSizeOrder" rows="5" placeholder="30×30&#10;60×60&#10;60×120"></textarea>
@@ -631,10 +660,11 @@
         <label>سایز درست</label><input id="setSizeTo" placeholder="مثلاً 60×120" />
         <button class="btn btn-outline btn-block" onclick="renameSizes()">اعمال روی همه کالاهای این سایز</button>
         <label style="font-weight:700;margin-top:10px">ستون‌های گزارش و رسید (تیک بزنید)</label><div id="colsBoxes"></div>
+        <div id="storageInfo" style="font-size:12px;color:#555;margin:6px 0"></div>
         <label>امضای مسئول انبار (یک بار ذخیره می‌شود)</label>
-        <input id="setStockSig" type="file" accept="image/*" onchange="saveStockSig(this)" />
+        <input id="setStockSig" type="file" accept="image/*" onchange="saveStockSig(this)" /><button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="clearImg('stockSig')">حذف این تصویر</button>
         <label>امضای دیجیتال تحویل‌گیرنده (اختیاری، برای رسید)</label>
-        <input id="setCustSig" type="file" accept="image/*" onchange="saveCustSig(this)" />
+        <input id="setCustSig" type="file" accept="image/*" onchange="saveCustSig(this)" /><button class="btn btn-outline btn-sm" style="margin-top:4px" onclick="clearImg('custSig')">حذف این تصویر</button>
         <label>متن وسط سربرگ (طلایی)</label>
         <input id="setHeaderMain" placeholder="نمایندگی رسمی کاشی امین میبد" />
         <label>زیرنویس وسط سربرگ (طلایی)</label>
@@ -771,6 +801,13 @@
       return false;
     }
 
+    function storageInfo() {
+      const kb = Math.round((JSON.stringify(state).length * 2) / 1024);
+      const el = document.getElementById('storageInfo');
+      const txt = 'حافظه مصرفی برنامه: ' + kb + ' کیلوبایت (حدود ۵۰۰۰ کیلوبایت ظرفیت مرورگر)';
+      if (el) el.textContent = txt;
+      return kb;
+    }
     function saveState() {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -1027,7 +1064,7 @@
       ov.innerHTML = '<div style="background:#fff;border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:600px;max-height:90vh;overflow:auto;direction:rtl">' +
         '<div style="font-weight:700;color:#1b2a4a;font-size:16px">کارتکس کالا: ' + esc(it.name) + '</div>' +
         '<div style="font-size:12px;color:#555;margin-bottom:8px">' + esc(it.code) + ' · ' + esc(it.size) + ' · ' + esc(gradeShow(it.grade)) + '</div>' +
-        '<table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center"><thead><tr style="background:#1b2a4a;color:#fff"><th style="padding:6px">تاریخ</th><th>حواله</th><th>مشتری</th><th>همکار</th><th>کارتن</th><th>متراژ</th><th>وزن</th></tr></thead>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;text-align:center"><thead><tr style="background:#1b2a4b;color:#fff"><th style="padding:6px">تاریخ</th><th>حواله</th><th>مشتری</th><th>همکار</th><th>کارتن</th><th>متراژ</th><th>وزن</th></tr></thead>' +
         '<tbody>' + (body || '<tr><td colspan="7" style="padding:10px">این کالا در هیچ حواله‌ای نیست</td></tr>') + '</tbody>' +
         '<tfoot><tr style="font-weight:700"><td colspan="4" style="padding:6px">جمع</td><td>' + fmtC(tc) + '</td><td>' + faNum(tm) + '</td><td>' + faNum(tk) + '</td></tr></tfoot></table>' +
         '<div style="display:flex;gap:8px;margin-top:12px"><button id="ikPrint" class="btn btn-primary" style="flex:1">چاپ / PDF</button><button id="ikClose" class="btn btn-outline" style="flex:1">بستن</button></div></div>';
@@ -1236,6 +1273,7 @@
       };
       if (!state.incomings) state.incomings = [];
       state.incomings.unshift(rec);
+      if (rec.driver) { state.book = state.book || { drivers: {}, colleagues: {} }; state.book.drivers[String(rec.driver).trim()] = state.book.drivers[String(rec.driver).trim()] || { phone: '' }; }
       setTimeout(() => printIncoming(rec), 300);
       saveState();
 
@@ -1460,6 +1498,32 @@
       ov.querySelector('#wvEdit').onclick = () => { ov.remove(); editWaybillInfo(id); };
     }
 
+    function openReturn(id) {
+      const wb = state.waybills.find(w => w.id === id);
+      if (!wb) return;
+      const lines = (wb.items || []).map((l, idx) => { const it = state.items.find(i => i.id === l.itemId) || {};
+        return '<div style="display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid #eee"><div style="flex:1">' + esc(it.code || '') + ' · ' + esc(it.name || '') + ' · ' + esc(it.size || '') + ' (فروش: ' + faNum(l.cartons, 0) + ' کارتن)</div><input type="number" min="0" step="0.01" data-idx="' + idx + '" value="0" style="width:90px" /></div>'; }).join('');
+      const ov = document.createElement('div');
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100004;display:flex;align-items:flex-end;justify-content:center';
+      ov.innerHTML = '<div style="background:#fff;border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:560px;max-height:90vh;overflow:auto;direction:rtl"><div style="font-weight:700;color:#1b2a4a;font-size:16px">برگشتی از حواله ' + esc(wb.no) + '</div><div style="font-size:12px;color:#555;margin:4px 0 8px">تعداد برگشتی را به کارتن وارد کنید؛ به موجودی برمی‌گردد.</div>' + lines +
+        '<label style="margin-top:8px">دلیل برگشت</label><input id="rtReason" placeholder="مثلاً ترک، رنگ متفاوت" /><div style="display:flex;gap:8px;margin-top:12px"><button id="rtSave" class="btn btn-primary" style="flex:1">ثبت برگشتی</button><button id="rtCancel" class="btn btn-outline" style="flex:1">انصراف</button></div></div>';
+      document.body.appendChild(ov);
+      ov.querySelector('#rtCancel').onclick = () => ov.remove();
+      ov.querySelector('#rtSave').onclick = () => {
+        const reason = (ov.querySelector('#rtReason').value || '').trim();
+        const items = [];
+        ov.querySelectorAll('input[data-idx]').forEach(inp => {
+          const n = parseFloat(String(inp.value).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))) || 0;
+          if (n > 0) { const l = wb.items[Number(inp.dataset.idx)]; items.push({ itemId: l.itemId, cartons: n, loaded: 0, value: 0 }); }
+        });
+        if (!items.length) { toast('تعداد برگشتی را وارد کنید'); return; }
+        const count = state.waybills.filter(w => w.kind === 'return' && w.returnOf === wb.id).length + 1;
+        const ret = { id: uid(), no: wb.no + '-R' + count, date: todayISO(), time: nowTime(), customer: wb.customer, phone: wb.phone, city: wb.city, colleague: wb.colleague, driverName: '', driverPhone: '', driverInfo: '', kind: 'return', returnOf: wb.id, reason, items, pickups: [], signCustomer: '', signatures: {} };
+        items.forEach(l => { const it = state.items.find(i => i.id === l.itemId); if (it) it.stockM2 = +(it.stockM2 + l.cartons * (it.m2PerCarton || 0)).toFixed(4); });
+        state.waybills.unshift(ret); saveState(); ov.remove(); renderAll(); toast('برگشتی ثبت شد و به موجودی برگشت');
+      };
+    }
+
     function renderWaybills() {
       const filter = document.getElementById('wbFilterColleague')?.value || '';
       const list = state.waybills.filter(w => !filter || w.colleague === filter);
@@ -1488,6 +1552,7 @@
           (wb.photo ? '<img class="photo-thumb" src="' + wb.photo + '" onclick="window.open(this.src)" />' : '') +
           '<div class="row" style="margin-top:8px;gap:4px">' +
           '<button class="btn btn-outline btn-sm" onclick="editWaybillInfo(\'' + wb.id + '\')">ویرایش</button>' +
+          (wb.kind !== 'return' ? '<button class="btn btn-outline btn-sm" onclick="openReturn(\'' + wb.id + '\')">برگشتی</button>' : '') +
           '<button class="btn btn-outline btn-sm" onclick="openSigModal(\'' + wb.id + '\')">امضا</button>' +
           '<button class="btn btn-outline btn-sm" onclick="printReceipt(\'' + wb.id + '\')">چاپ رسید</button>' +
           '<button class="btn btn-outline btn-sm" onclick="shareWaybillPDF(\'' + wb.id + '\')">PDF</button>' +
@@ -1735,18 +1800,90 @@
     function saveFootLogo(input) {
       const f = input.files && input.files[0];
       if (!f) return;
+      input.__done = true; setTimeout(() => { input.value = ''; }, 0);
       const url = URL.createObjectURL(f);
       const img = new Image();
       img.onload = () => {
-        const sc = Math.min(1, 600 / Math.max(img.width, img.height));
+        const sc = Math.min(1, 360 / Math.max(img.width, img.height));
         const c = document.createElement('canvas');
         c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        state.settings.footLogo = c.toDataURL('image/png');
-        URL.revokeObjectURL(url); saveState(); toast('لوگوی پایین صفحه ذخیره شد');
+        state.settings.footLogo = c.toDataURL('image/jpeg', 0.82);
+        URL.revokeObjectURL(url); saveState(); input.value = ''; toast('لوگوی پایین صفحه ذخیره شد'); storageInfo();
       };
       img.onerror = () => { URL.revokeObjectURL(url); toast('فایل خوانده نشد'); };
       img.src = url;
+    }
+
+
+    function clearImg(key) {
+      if (!confirm('امضا/تصویر حذف شود؟')) return;
+      delete state.settings[key];
+      saveState(); toast('حذف شد');
+    }
+    function tblCss() {
+      const t = state.settings.tbl || {};
+      const fam = t.family || 'Vazirmatn, Tahoma, sans-serif';
+      const size = t.size || 11.5;
+      const w = t.weight || '400';
+      const col = t.color || '#111111';
+      const hw = t.headWeight || '700';
+      const hc = t.headColor || '#ffffff';
+      const hb = t.headBg || '#9b3a2c';
+      return '#receipt table td, #dailyTableWrap table td, #receipt table th, #dailyTableWrap table th { font-family: ' + fam + ' !important; font-size: ' + size + 'px !important; font-weight: ' + w + ' !important; color: ' + col + ' !important; }' +
+        '#receipt table th, #dailyTableWrap table th, #receipt thead th, #dailyTableWrap thead th { font-weight: ' + hw + ' !important; color: ' + hc + ' !important; background-color: ' + hb + ' !important; }';
+    }
+    function applyFont() {
+      const f = state.settings.font || {};
+      let st = document.getElementById('userFontStyle');
+      if (!st) { st = document.createElement('style'); st.id = 'userFontStyle'; document.head.appendChild(st); }
+      const fam = f.family || 'Vazirmatn, Tahoma, sans-serif';
+      const size = f.size || 14;
+      const col = f.color || '#111111';
+      st.textContent = 'body, input, select, textarea, button, label, td, th, div, span { font-family: ' + fam + ' !important; color: ' + col + '; } body { font-size: ' + size + 'px; }';
+      st.textContent += tblCss();
+    }
+    function saveFontSettings() {
+      state.settings.font = {
+        family: document.getElementById('setFontFamily')?.value || 'Vazirmatn, Tahoma, sans-serif',
+        size: Number(document.getElementById('setFontSize')?.value) || 14,
+        color: document.getElementById('setFontColor')?.value || '#111111'
+      };
+      state.settings.tbl = { family: document.getElementById('setTblFam')?.value || 'Vazirmatn, Tahoma, sans-serif', size: Number(document.getElementById('setTblSize')?.value) || 11.5, weight: document.getElementById('setTblWeight')?.value || '400', color: document.getElementById('setTblColor')?.value || '#111111', headWeight: document.getElementById('setTblHeadWeight')?.value || '700', headColor: document.getElementById('setTblHeadColor')?.value || '#ffffff', headBg: document.getElementById('setTblHeadBg')?.value || '#9b3a2c' };
+      saveState(); applyFont(); toast('تنظیمات فونت ذخیره شد');
+    }
+    function addReturn() {
+      const ref = (document.getElementById('retRef')?.value || '').trim();
+      const code = (document.getElementById('retCode')?.value || '').trim();
+      const qty = parseFloat(toEnNum(document.getElementById('retQty')?.value || '0'));
+      const unit = document.getElementById('retUnit')?.value || 'carton';
+      if (!ref) { toast('شماره حواله خروجی را بنویسید'); return; }
+      const out = state.waybills.find(w => String(w.no) === ref && (w.kind || 'sale') === 'sale');
+      if (!out) { toast('حواله خروجی با این شماره پیدا نشد'); return; }
+      const it = state.items.find(i => String(i.code) === code);
+      if (!it) { toast('کد کالا در موجودی نیست'); return; }
+      if (!(qty > 0)) { toast('تعداد را وارد کنید'); return; }
+      const cartons = unit === 'm2' ? qty / it.m2PerCarton : unit === 'sheet' ? (qty * sheetM2(it.size)) / it.m2PerCarton : qty;
+      const m2 = +(cartons * (it.m2PerCarton || 0)).toFixed(4);
+      state.returns = state.returns || [];
+      state.returns.unshift({ id: uid(), date: todayISO(), refNo: ref, customer: out.customer || '', itemId: it.id, code: it.code, name: it.name, size: it.size, cartons: +cartons.toFixed(4), m2, reason: (document.getElementById('retReason')?.value || '').trim() });
+      it.stockM2 = +(it.stockM2 + m2).toFixed(4);
+      saveState(); renderReturns(); renderAll(); toast('برگشتی ثبت شد و به موجودی برگشت');
+    }
+    function deleteReturn(id) {
+      const r = (state.returns || []).find(x => x.id === id); if (!r) return;
+      if (!confirm('این برگشتی حذف شود؟ موجودی دوباره کم می‌شود.')) return;
+      const it = state.items.find(i => i.id === r.itemId);
+      if (it) it.stockM2 = +(it.stockM2 - r.m2).toFixed(4);
+      state.returns = state.returns.filter(x => x.id !== id);
+      saveState(); renderReturns(); renderAll();
+    }
+    function renderReturns() {
+      const box = document.getElementById('retList'); if (!box) return;
+      const list = state.returns || [];
+      box.innerHTML = list.length ? list.map(r => '<div style="border-bottom:1px solid #eee;padding:6px 0;font-size:12px">' +
+        '<b>برگشتی از حواله ' + esc(r.refNo) + '</b> · ' + esc(r.customer) + ' · ' + esc(r.code) + ' ' + esc(r.name) + ' · ' + fmtC(r.cartons) + ' کارتن (' + faNum(r.m2) + ' متر)' + (r.reason ? ' · ' + esc(r.reason) : '') +
+        ' <button class="btn btn-outline btn-sm" onclick="deleteReturn(\'' + r.id + '\')">حذف</button></div>').join('') : '<div class="muted">برگشتی ثبت نشده</div>';
     }
 
     function printBreakage() {
@@ -1911,16 +2048,17 @@
     function savePrepSig(input) {
       const f = input.files && input.files[0];
       if (!f) return;
+      input.__done = true; setTimeout(() => { input.value = ''; }, 0);
       const url = URL.createObjectURL(f);
       const img = new Image();
       img.onload = () => {
-        const sc = Math.min(1, 320 / Math.max(img.width, img.height));
+        const sc = Math.min(1, 240 / Math.max(img.width, img.height));
         const c = document.createElement('canvas');
         c.width = Math.round(img.width * sc); c.height = Math.round(img.height * sc);
         c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
         state.settings.prepSig = c.toDataURL('image/png');
         URL.revokeObjectURL(url);
-        saveState(); toast('امضای تنظیم‌کننده ذخیره شد');
+        saveState(); input.value = ''; toast('امضای تنظیم‌کننده ذخیره شد'); storageInfo();
         const st = document.getElementById('prepSigState'); if (st) st.textContent = 'فایل ذخیره شد';
       };
       img.onerror = () => { URL.revokeObjectURL(url); toast('فایل خوانده نشد'); };
@@ -2020,7 +2158,17 @@
       printHtmlNow('<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px">' + receiptHeaderHtml('مشخصات سایزها', null, '', null, false) + sizeRefHtml() + footLogoHtml() + '</div>');
     }
 
+    function saveDayNote() {
+      state.dayNotes = state.dayNotes || {};
+      state.dayNotes[todayISO()] = (document.getElementById('dayNote')?.value || '');
+      saveState();
+    }
+    function dayNoteHtml() {
+      const t = (state.dayNotes || {})[todayISO()] || '';
+      return t ? '<div style="margin-top:12px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12px;white-space:pre-line"><b>توضیحات این روز:</b><br>' + esc(t) + '</div>' : '';
+    }
     function renderDaily() {
+      { const dn = document.getElementById('dayNote'); if (dn) dn.value = (state.dayNotes || {})[todayISO()] || ''; }
       const from = parseFloat(document.getElementById('dailyFrom').value);
       const to = parseFloat(document.getElementById('dailyTo').value);
       const brand = document.getElementById('dailyBrand')?.value || '';
@@ -2043,7 +2191,7 @@
       const logos = '<div style="width:64px;flex-shrink:0;text-align:center"><img src="' + LOGO_DATA + '" style="width:64px;height:auto;display:block" alt="امین" /></div>';
       const logos2 = '';
       const reportHeader =
-        '<div style="background:#1b2a4a;color:#fff;padding:12px 14px;border-radius:10px;margin-bottom:12px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px">' +
+        '<div style="background:#1b2a4b;color:#fff;padding:12px 14px;border-radius:10px;margin-bottom:12px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px">' +
           logos +
           '<div style="text-align:center;flex:1">' +
             '<div style="font-size:12px;color:#f5d98a">نمایندگی استان یزد کاشی امین میبد</div>' +
@@ -2094,6 +2242,7 @@
       const prepWho = state.settings.prepSig ? '<img src="' + state.settings.prepSig + '" style="height:46px;width:auto;vertical-align:middle" />' : '<b>' + esc(state.settings.preparer || '-') + '</b>';
       const prepLine = '<div style="font-size:12px;margin:6px 2px;display:flex;justify-content:space-between;align-items:center"><span>تنظیم‌کننده: ' + prepWho + '</span><span>ساعت: ' + nowTime() + '</span></div>';
       html = (state.settings.prepPos === 'bottom') ? html + prepLine : prepLine + html;
+      html += dayNoteHtml();
       html += footLogoHtml();
       document.getElementById('dailyTableWrap').innerHTML = html;
     }
@@ -2282,7 +2431,7 @@
       const title = isLoading ? 'رسید بارگیری مانده' : 'رسید خروجی / حواله';
       return `
         <div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;width:100%;background:#fff;color:#1f2937;padding:12px;box-sizing:border-box">
-          <div style="background:#1b2a4a;color:#fff;padding:12px 16px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between">
+          <div style="background:#1b2a4b;color:#fff;padding:12px 16px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between">
             <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;border:none;background:transparent;flex-shrink:0"><img src="${LOGO_DATA}" style="width:100%;height:100%;object-fit:contain;display:block" alt="لوگو" /></div>
             <div style="text-align:center;flex:1">
               <div style="font-size:16px;font-weight:700">نمایندگی استان یزد کاشی امین میبد</div>
@@ -2305,7 +2454,7 @@
           </div>
           <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px">
             <thead>
-              <tr style="background:#1b2a4a;color:#fff">
+              <tr style="background:#1b2a4b;color:#fff">
                 <th style="border:1px solid #1b2a4a;padding:6px">کد</th>
                 <th style="border:1px solid #1b2a4a;padding:6px">نام طرح</th>
                 <th style="border:1px solid #1b2a4a;padding:6px">گرید/درجه</th>
@@ -2356,7 +2505,7 @@
     }
     function watermarkHtml() { return ''; }
     function reportHeaderHtml() {
-      return '<div style="background:#1b2a4a;color:#fff;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
+      return '<div style="background:#1b2a4b;color:#fff;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
         '<div style="width:24%;text-align:center"><img src="' + LOGO_DATA + '" style="height:60px;width:auto;display:block;margin:0 auto" />' +
           '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">' + esc(state.settings.letterLatin || 'AMIN TILE') + '</div></div>' +
         '<div style="flex:1;text-align:center"><div style="font-size:17px;font-weight:700;color:#e9c46a">' + esc((state.settings.headerMain || 'نمایندگی رسمی کاشی امین میبد')) + '</div>' +
@@ -2368,7 +2517,7 @@
       const t = timeStr || nowTime();
       const right = showDT === false ? '<div style="width:26%"></div>' :
         '<div style="width:26%;text-align:center;font-size:11px;line-height:1.8;color:#e9c46a"><div>' + dateLabel + ': ' + dateTextOf(dateIso) + '</div><div>ساعت: ' + t + '</div></div>';
-      return '<div style="background:#1b2a4a;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
+      return '<div style="background:#1b2a4b;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
         '<div style="width:26%;text-align:center"><img src="' + LOGO_DATA + '" style="height:54px;width:auto;display:block;margin:0 auto" />' +
           '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">' + esc(state.settings.letterLatin || 'AMIN TILE') + '</div></div>' +
         '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:700;color:#e9c46a">' + title + '</div>' +
@@ -2462,11 +2611,12 @@
     }
 
     function showMore(which) {
-      ['recon','cash','shift','book','import','pick','sizeref'].forEach(k => { const el = document.getElementById('more-' + k); if (el) el.style.display = k === which ? 'block' : 'none'; });
+      ['recon','cash','shift','book','import','pick','sizeref','returns'].forEach(k => { const el = document.getElementById('more-' + k); if (el) el.style.display = k === which ? 'block' : 'none'; });
       if (which === 'cash') renderCash();
       if (which === 'shift') renderShifts();
       if (which === 'pick') renderPick();
       if (which === 'sizeref') sizeRefRender();
+      if (which === 'returns') renderReturns();
     }
     function saveBookEntry() {
       const type = document.getElementById('bookType').value;
@@ -2509,7 +2659,7 @@
 
     function fillKeepers() {
       const sel = document.getElementById('shiftKeeper'); if (!sel) return;
-      const names = [state.settings.keeper1, state.settings.keeper2].filter(Boolean);
+      const names = [state.settings.keeper1, state.settings.keeper2, state.settings.manager].filter(Boolean);
       sel.innerHTML = names.length ? names.map(n => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('') : '<option value="">نام انباردارها را در تنظیمات بنویسید</option>';
     }
 
@@ -2646,6 +2796,7 @@
     }
     function hoursBetween(a, b) { const [h1, m1] = a.split(':').map(Number), [h2, m2] = b.split(':').map(Number); let m = (h2 * 60 + m2) - (h1 * 60 + m1); if (m < 0) m += 1440; return m; }
     function renderShifts() {
+      loadShiftNote();
       fillKeepers();
       if (!document.getElementById('shiftDate').value) document.getElementById('shiftDate').value = todayISO();
       if (!document.getElementById('shiftReportDate').value) document.getElementById('shiftReportDate').value = todayISO();
@@ -2654,29 +2805,53 @@
       document.getElementById('shiftList').innerHTML = list.length ? list.map(s => '<div style="padding:6px 0;border-bottom:1px solid #eee;font-size:13px"><b>' + esc(s.keeper) + '</b> · ورود ' + esc(s.tin) + ' · خروج ' + esc(s.tout) + ' · ' + faNum(hoursBetween(s.tin, s.tout) / 60) + ' ساعت · بارگیری: ' + faNum(s.loads, 0) + ' <button class="del" onclick="deleteShift(\'' + s.id + '\')">✕</button></div>').join('') : '<div class="muted">برای این روز ثبتی نیست</div>';
     }
     function deleteShift(id) { state.shifts = (state.shifts || []).filter(s => s.id !== id); saveState(); renderShifts(); }
+    function saveShiftNote() {
+      state.shiftNotes = state.shiftNotes || {};
+      state.shiftNotes[document.getElementById('shiftReportDate').value || todayISO()] = document.getElementById('shiftNote').value || '';
+      saveState();
+    }
+    function loadShiftNote() {
+      const el = document.getElementById('shiftNote'); if (!el) return;
+      el.value = (state.shiftNotes || {})[document.getElementById('shiftReportDate').value || todayISO()] || '';
+    }
     function printShiftDay() {
       const d = document.getElementById('shiftReportDate').value || todayISO();
-      const list = (state.shifts || []).filter(s => s.date === d);
-      const wbs = state.waybills.filter(w => w.date === d);
-      let c = 0, kg = 0;
-      wbs.forEach(w => (w.items || []).forEach(l => { const it = state.items.find(i => i.id === l.itemId) || {}; c += l.cartons; kg += l.cartons * (it.weightPerCarton || 0); }));
-      const td = 'border:1px solid #cbd5e1;padding:5px;text-align:center';
-      const th = 'border:1px solid #1b2a4a;padding:6px;background:#9b3a2c;color:#fff';
-      const rows = list.map(s => '<tr><td style="' + td + '">' + esc(s.keeper) + '</td><td style="' + td + '">' + esc(s.tin) + '</td><td style="' + td + '">' + esc(s.tout) + '</td><td style="' + td + '">' + faNum(hoursBetween(s.tin, s.tout) / 60) + '</td><td style="' + td + '">' + faNum(s.loads, 0) + '</td></tr>').join('');
-      printHtmlNow('<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;padding:10px">' + receiptHeaderHtml('گزارش پایان روز انبار', d, 'تاریخ', '') +
-        '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:10px"><thead><tr><th style="' + th + '">انباردار</th><th style="' + th + '">ورود</th><th style="' + th + '">خروج</th><th style="' + th + '">ساعت کار</th><th style="' + th + '">بارگیری</th></tr></thead><tbody>' + (rows || '<tr><td colspan="5" style="' + td + '">ثبتی نیست</td></tr>') + '</tbody></table>' +
-        '<div style="margin-top:12px;font-size:13px;line-height:2">حواله‌های امروز: <b>' + faNum(wbs.length, 0) + '</b> · کل کارتن: <b>' + fmtC(c) + '</b> · وزن کل: <b>' + faNum(kg) + '</b> کیلو</div></div>');
+      const people = [
+        { name: state.settings.keeper1 || 'انباردار ۱', role: 'انباردار' },
+        { name: state.settings.keeper2 || 'انباردار ۲', role: 'انباردار' },
+        { name: state.settings.manager || 'مسئول انبار', role: 'مسئول انبار' },
+      ];
+      const td = 'border:1px solid #cbd5e1;padding:7px;text-align:center';
+      const rows = people.map((p, idx) => {
+        const sh = (state.shifts || []).filter(s => s.date === d && s.keeper === p.name)[0];
+        const hrs = sh ? faNum(+(hoursBetween(sh.tin, sh.tout) / 60).toFixed(2)) : '—';
+        return '<tr><td style="' + td + '">' + (idx + 1) + '</td><td style="' + td + ';text-align:right">' + esc(p.name) + '</td><td style="' + td + '">' + esc(p.role) + '</td>' +
+          '<td style="' + td + '">' + (sh ? esc(sh.tin) : '—') + '</td><td style="' + td + '">' + (sh ? esc(sh.tout) : '—') + '</td>' +
+          '<td style="' + td + '">' + hrs + '</td><td style="' + td + '">' + (sh ? faNum(sh.loads || 0, 0) : '—') + '</td></tr>';
+      }).join('');
+      const th = 'border:1px solid #7d2519;padding:7px;background:#9b3a2c;color:#fff';
+      const note = (state.shiftNotes || {})[d] || '';
+      const blank = Array.from({ length: 15 }, (_, k) => '<tr><td style="border:1px solid #cbd5e1;height:26px;width:34px;text-align:center;color:#999">' + faNum(k + 1, 0) + '</td><td style="border:1px solid #cbd5e1"></td></tr>').join('');
+      const html = '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px">' +
+        receiptHeaderHtml('گزارش کار انبار', d, 'تاریخ', '', false) +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:12px"><thead><tr><th style="' + th + '">ردیف</th><th style="' + th + '">نام</th><th style="' + th + '">نقش</th><th style="' + th + '">ساعت ورود</th><th style="' + th + '">ساعت خروج</th><th style="' + th + '">ساعت کار</th><th style="' + th + '">تعداد بارگیری</th></tr></thead><tbody>' + rows + '</tbody></table>' +
+        (note ? '<div style="margin-top:12px;padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;white-space:pre-line;font-size:12px"><b>یادداشت:</b><br>' + esc(note) + '</div>' : '') +
+        '<div style="margin-top:14px;font-weight:700;font-size:13px">عملکرد روز (دستی)</div>' +
+        '<table style="width:100%;border-collapse:collapse;margin-top:6px">' + blank + '</table>' +
+        footLogoHtml() + '</div>';
+      printHtmlNow(html);
     }
 
     function printHtmlNow(html) {
       let st = document.getElementById('printCss');
       if (!st) { st = document.createElement('style'); st.id = 'printCss'; document.head.appendChild(st); }
-      st.textContent = '@media print {' +
+      st.textContent = '@media print { body, #receipt { color: ' + ((state.settings.font && state.settings.font.color) || '#111111') + ' !important; font-family: ' + ((state.settings.font && state.settings.font.family) || 'Vazirmatn, Tahoma, sans-serif') + ' !important; font-size: ' + ((state.settings.font && state.settings.font.size) || 14) + 'px !important; }' +
         ' body > *:not(#receipt) { display: none !important; }' +
         ' #receipt { display: block !important; position: static !important; width: 100% !important; background: #fff !important; }' +
                                         ' #receipt img.wm { opacity: 0.22 !important; filter: none !important; -webkit-filter: none !important; mix-blend-mode: normal !important; }' +' @page { size: A4; margin: 10mm; }' +
         ' * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }' +
         ' tr { page-break-inside: avoid; } }';
+      st.textContent += tblCss();
       const el = document.getElementById('receipt');
       el.innerHTML = '<div class="bw">' + html + '</div>';
       el.style.display = 'block';
@@ -2689,13 +2864,15 @@
     function saveCustSig(input) {
       const f = input.files && input.files[0];
       if (!f) return;
-      compressImage(f, 400, 0.9).then(url => { state.settings.custSig = url; saveState(); toast('امضای دیجیتال ذخیره شد'); }).catch(() => toast('امضا ذخیره نشد'));
+      input.__done = true; setTimeout(() => { input.value = ''; }, 0);
+      compressImage(f, 260, 0.8).then(url => { state.settings.custSig = url; saveState(); input.value = ''; toast('امضای دیجیتال ذخیره شد'); storageInfo(); }).catch(() => toast('امضا ذخیره نشد'));
     }
     function saveStockSig(input) {
       const f = input.files && input.files[0];
       if (!f) return;
-      compressImage(f, 400, 0.9).then(url => {
-        state.settings.stockSig = url; saveState(); toast('امضای مسئول انبار ذخیره شد');
+      input.__done = true; setTimeout(() => { input.value = ''; }, 0);
+      compressImage(f, 260, 0.8).then(url => {
+        state.settings.stockSig = url; saveState(); input.value = ''; toast('امضای مسئول انبار ذخیره شد'); storageInfo();
       }).catch(() => toast('امضا ذخیره نشد'));
     }
     function markBackup() { localStorage.setItem('lastBackupAt', String(Date.now())); hideBackupBanner(); }
@@ -2832,7 +3009,7 @@
       const old = document.getElementById('sendBar'); if (old) old.remove();
       const bar = document.createElement('div');
       bar.id = 'sendBar';
-      bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:86px;z-index:9999;background:#1b2a4a;color:#fff;border-radius:12px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;gap:8px;align-items:center;justify-content:space-between';
+      bar.style.cssText = 'position:fixed;left:12px;right:12px;bottom:86px;z-index:9999;background:#1b2a4b;color:#fff;border-radius:12px;padding:12px;box-shadow:0 4px 16px rgba(0,0,0,.3);display:flex;gap:8px;align-items:center;justify-content:space-between';
       const txt = document.createElement('span'); txt.textContent = 'PDF ذخیره شد';
       const btn = document.createElement('button'); btn.textContent = 'ارسال فایل';
       btn.style.cssText = 'background:#f5d98a;color:#3d2e00;border:0;border-radius:8px;padding:10px 14px;font-weight:700';
@@ -2913,6 +3090,7 @@
       state.settings.dailyColor = document.getElementById('setDailyColor')?.value || '#e9c46a';
       state.settings.prepPos = document.getElementById('setPrepPos')?.value || 'top';
       state.settings.footOpacity = Number(document.getElementById('setFootOpacity')?.value) || 15;
+      applyFont();
       state.settings.sizeOrder = (document.getElementById('setSizeOrder')?.value || '').split('\n').map(normSize).filter(Boolean);
       state.settings.dCols = readColsBox('d', DCOLS); state.settings.rCols = readColsBox('r', RCOLS);
       state.settings.receiptFooter = document.getElementById('setFooter')?.value.trim() || '';
@@ -2947,7 +3125,7 @@
       { const sd = document.getElementById('setDigits'); if (sd) sd.value = (state.settings && state.settings.digits) || 'fa'; }
       { const sc = document.getElementById('setCalendar'); if (sc) sc.value = (state.settings && state.settings.calendar) || 'shamsi'; }
       { const sm = document.getElementById('setManager'); if (sm) sm.value = state.settings.manager || ''; const k1 = document.getElementById('setKeeper1'); if (k1) k1.value = state.settings.keeper1 || ''; const k2 = document.getElementById('setKeeper2'); if (k2) k2.value = state.settings.keeper2 || ''; }
-      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const fo = document.getElementById('setFootOpacity'); if (fo) fo.value = state.settings.footOpacity || 15; const so = document.getElementById('setSizeOrder'); if (so) so.value = (state.settings.sizeOrder || []).join('\n'); renderColsBoxes(); const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
+      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const fo = document.getElementById('setFootOpacity'); if (fo) fo.value = state.settings.footOpacity || 15; storageInfo(); const so = document.getElementById('setSizeOrder'); if (so) so.value = (state.settings.sizeOrder || []).join('\n'); renderColsBoxes(); { const f = state.settings.font || {}; const ff = document.getElementById('setFontFamily'); if (ff) ff.value = f.family || 'Vazirmatn, Tahoma, sans-serif'; const fs = document.getElementById('setFontSize'); if (fs) fs.value = f.size || 14; const fc = document.getElementById('setFontColor'); if (fc) fc.value = f.color || '#111111'; } const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
       document.getElementById('setMap').value = state.settings.mapLink || '';
       { const sw = document.getElementById('setWebhook'); if (sw) sw.value = state.settings.webhookUrl || ''; }
       document.getElementById('setAddress').value = state.settings.address || '';
@@ -3165,6 +3343,8 @@
     updateWbDateLabel();
     loadState();
     renderAll();
+    applyFont();
+    applyFont();
     hideWarehouseSig();
     checkBackupReminder();
     { const lc = localStorage.getItem('lastColleague'); const wc = document.getElementById('wbColleague'); if (wc && lc && !wc.value) wc.value = lc; }

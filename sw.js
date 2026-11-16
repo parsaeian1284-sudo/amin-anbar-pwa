@@ -1,4 +1,4 @@
-const CACHE = 'amin-install-32';
+const CACHE = 'amin-install-34';
 const FILES = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', (e) => {
