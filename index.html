@@ -623,6 +623,7 @@
         <label>ضخامت نوشته ردیف عنوان</label><select id="setTblHeadWeight"><option value="400">معمولی</option><option value="700" selected>پررنگ</option></select>
         <label>رنگ نوشته ردیف عنوان</label><input id="setTblHeadColor" type="color" value="#ffffff" />
         <label>رنگ زمینه ردیف عنوان</label><input id="setTblHeadBg" type="color" value="#9b3a2c" />
+        <div style="font-weight:700;margin-top:10px">رنگ سربرگ‌ها (جدا از رنگ برنامه)</div><label>رنگ نوشته‌های سربرگ (بالای گزارش‌ها و رسیدها)</label><input id="setLetterColor" type="color" value="#e9c46a" />
         <button class="btn btn-outline btn-block" onclick="saveFontSettings()">اعمال فونت</button>
         <label>📱 شماره موبایل مسئول انبار</label>
         <input id="setPhone" placeholder="شماره مسئول انبار (روی سربرگ و رسید چاپ می‌شود)" />
@@ -1842,6 +1843,7 @@
       const col = f.color || '#111111';
       st.textContent = 'body, input, select, textarea, button, label, td, th, div, span { font-family: ' + fam + ' !important; color: ' + col + '; } body { font-size: ' + size + 'px; }';
       st.textContent += tblCss();
+      st.textContent += '.lh, .lh * { color: ' + (state.settings.letterColor || '#e9c46a') + ' !important; }';
     }
     function saveFontSettings() {
       state.settings.font = {
@@ -1850,6 +1852,7 @@
         color: document.getElementById('setFontColor')?.value || '#111111'
       };
       state.settings.tbl = { family: document.getElementById('setTblFam')?.value || 'Vazirmatn, Tahoma, sans-serif', size: Number(document.getElementById('setTblSize')?.value) || 11.5, weight: document.getElementById('setTblWeight')?.value || '400', color: document.getElementById('setTblColor')?.value || '#111111', headWeight: document.getElementById('setTblHeadWeight')?.value || '700', headColor: document.getElementById('setTblHeadColor')?.value || '#ffffff', headBg: document.getElementById('setTblHeadBg')?.value || '#9b3a2c' };
+      state.settings.letterColor = document.getElementById('setLetterColor')?.value || '#e9c46a';
       saveState(); applyFont(); toast('تنظیمات فونت ذخیره شد');
     }
     function addReturn() {
@@ -2505,7 +2508,7 @@
     }
     function watermarkHtml() { return ''; }
     function reportHeaderHtml() {
-      return '<div style="background:#1b2a4b;color:#fff;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
+      return '<div class="lh" style="background:#1b2a4b;color:#fff;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
         '<div style="width:24%;text-align:center"><img src="' + LOGO_DATA + '" style="height:60px;width:auto;display:block;margin:0 auto" />' +
           '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">' + esc(state.settings.letterLatin || 'AMIN TILE') + '</div></div>' +
         '<div style="flex:1;text-align:center"><div style="font-size:17px;font-weight:700;color:#e9c46a">' + esc((state.settings.headerMain || 'نمایندگی رسمی کاشی امین میبد')) + '</div>' +
@@ -2517,7 +2520,7 @@
       const t = timeStr || nowTime();
       const right = showDT === false ? '<div style="width:26%"></div>' :
         '<div style="width:26%;text-align:center;font-size:11px;line-height:1.8;color:#e9c46a"><div>' + dateLabel + ': ' + dateTextOf(dateIso) + '</div><div>ساعت: ' + t + '</div></div>';
-      return '<div style="background:#1b2a4b;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
+      return '<div class="lh" style="background:#1b2a4b;border-radius:10px;padding:12px 14px;border-bottom:3px solid #c9a227;display:flex;align-items:center;justify-content:space-between;gap:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact">' +
         '<div style="width:26%;text-align:center"><img src="' + LOGO_DATA + '" style="height:54px;width:auto;display:block;margin:0 auto" />' +
           '<div style="color:#c9a227;font-weight:700;font-size:11px;letter-spacing:1px;margin-top:3px">' + esc(state.settings.letterLatin || 'AMIN TILE') + '</div></div>' +
         '<div style="flex:1;text-align:center"><div style="font-size:19px;font-weight:700;color:#e9c46a">' + title + '</div>' +
@@ -2852,6 +2855,7 @@
         ' * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }' +
         ' tr { page-break-inside: avoid; } }';
       st.textContent += tblCss();
+      st.textContent += '.lh, .lh * { color: ' + (state.settings.letterColor || '#e9c46a') + ' !important; }';
       const el = document.getElementById('receipt');
       el.innerHTML = '<div class="bw">' + html + '</div>';
       el.style.display = 'block';
@@ -3125,7 +3129,7 @@
       { const sd = document.getElementById('setDigits'); if (sd) sd.value = (state.settings && state.settings.digits) || 'fa'; }
       { const sc = document.getElementById('setCalendar'); if (sc) sc.value = (state.settings && state.settings.calendar) || 'shamsi'; }
       { const sm = document.getElementById('setManager'); if (sm) sm.value = state.settings.manager || ''; const k1 = document.getElementById('setKeeper1'); if (k1) k1.value = state.settings.keeper1 || ''; const k2 = document.getElementById('setKeeper2'); if (k2) k2.value = state.settings.keeper2 || ''; }
-      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const fo = document.getElementById('setFootOpacity'); if (fo) fo.value = state.settings.footOpacity || 15; storageInfo(); const so = document.getElementById('setSizeOrder'); if (so) so.value = (state.settings.sizeOrder || []).join('\n'); renderColsBoxes(); { const f = state.settings.font || {}; const ff = document.getElementById('setFontFamily'); if (ff) ff.value = f.family || 'Vazirmatn, Tahoma, sans-serif'; const fs = document.getElementById('setFontSize'); if (fs) fs.value = f.size || 14; const fc = document.getElementById('setFontColor'); if (fc) fc.value = f.color || '#111111'; } const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
+      { const hm = document.getElementById('setHeaderMain'); if (hm) hm.value = state.settings.headerMain || ''; const hs = document.getElementById('setHeaderSub'); if (hs) hs.value = state.settings.headerSub || ''; const dd = document.getElementById('setDailyDate'); if (dd) dd.value = state.settings.dailyDate || ''; const dt = document.getElementById('setDailyTime'); if (dt) dt.value = state.settings.dailyTime || ''; const dc = document.getElementById('setDailyColor'); if (dc) dc.value = state.settings.dailyColor || '#e9c46a'; const lcol = document.getElementById('setLetterColor'); if (lcol) lcol.value = state.settings.letterColor || '#e9c46a'; const pp = document.getElementById('setPrepPos'); if (pp) pp.value = state.settings.prepPos || 'top'; const fo = document.getElementById('setFootOpacity'); if (fo) fo.value = state.settings.footOpacity || 15; storageInfo(); const so = document.getElementById('setSizeOrder'); if (so) so.value = (state.settings.sizeOrder || []).join('\n'); renderColsBoxes(); { const f = state.settings.font || {}; const ff = document.getElementById('setFontFamily'); if (ff) ff.value = f.family || 'Vazirmatn, Tahoma, sans-serif'; const fs = document.getElementById('setFontSize'); if (fs) fs.value = f.size || 14; const fc = document.getElementById('setFontColor'); if (fc) fc.value = f.color || '#111111'; } const sf2 = document.getElementById('setFooter'); if (sf2) sf2.value = state.settings.receiptFooter || ''; const nc = document.getElementById('setNoteColor'); if (nc) nc.value = state.settings.noteColor || '#111111'; const nb = document.getElementById('setNoteBg'); if (nb) nb.value = state.settings.noteBg || '#ffffff'; const ll = document.getElementById('setLetterLatin'); if (ll) ll.value = state.settings.letterLatin || ''; const ls2 = document.getElementById('setLetterSub'); if (ls2) ls2.value = state.settings.letterSub || ''; }
       document.getElementById('setMap').value = state.settings.mapLink || '';
       { const sw = document.getElementById('setWebhook'); if (sw) sw.value = state.settings.webhookUrl || ''; }
       document.getElementById('setAddress').value = state.settings.address || '';
