@@ -1,8 +1,7 @@
 {
   "name": "انبار کاشی امین میبد",
   "short_name": "انبار امین",
-  "description": "مدیریت موجودی و حواله انبار نمایندگی کاشی امین میبد - یزد",
-  "start_url": "./",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
@@ -10,31 +9,18 @@
   "lang": "fa",
   "background_color": "#1b2a4a",
   "theme_color": "#1b2a4a",
-  "categories": ["business", "productivity"],
   "icons": [
     {
-      "src": "icons/icon-192.png",
+      "src": "./icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "icons/icon-512.png",
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "icons/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "icons/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
   ]
 }
