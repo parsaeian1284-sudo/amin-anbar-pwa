@@ -15,6 +15,8 @@
   <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./cloud-config.js"></script>
   <style>
     :root {
       --navy: #1b2a4a;
@@ -243,8 +245,34 @@
       font-family: Tahoma, Vazirmatn, Arial, sans-serif;
     }
   </style>
+
+  <style>
+    #cloudPanel{margin:10px 12px;padding:12px;background:#fff;border:1px solid #d6dbe4;border-radius:12px;box-shadow:0 1px 3px #0000000d;font-family:inherit}
+    #cloudPanel .cloud-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+    #cloudPanel input{min-width:0;flex:1;padding:10px;border:1px solid #ccd2dc;border-radius:8px;font:inherit}
+    #cloudPanel button{border:0;border-radius:8px;padding:9px 12px;font:inherit;cursor:pointer}
+    #cloudLoginBtn,#cloudPullBtn{background:#1b2a4a;color:white}
+    #cloudPushBtn{background:#147d48;color:white}
+    #cloudLogoutBtn{background:#eef0f3;color:#333}
+    #cloudStatus{font-size:12px;line-height:1.8;color:#555;margin-top:7px}
+  </style>
 </head>
 <body>
+  <section id="cloudPanel" dir="rtl">
+    <strong>اتصال آنلاین انبار امین</strong>
+    <div class="cloud-row" id="cloudLoginFields">
+      <input id="cloudEmail" type="email" autocomplete="username" placeholder="ایمیل حساب مدیر">
+      <input id="cloudPassword" type="password" autocomplete="current-password" placeholder="رمز عبور">
+      <button id="cloudLoginBtn" type="button" onclick="cloudLogin()">ورود مدیر</button>
+    </div>
+    <div class="cloud-row" id="cloudActions" style="display:none">
+      <button id="cloudPullBtn" type="button" onclick="cloudPull()">دریافت از سرور</button>
+      <button id="cloudPushBtn" type="button" onclick="cloudPush()">ارسال نسخه فعلی به سرور</button>
+      <button id="cloudLogoutBtn" type="button" onclick="cloudLogout()">خروج</button>
+    </div>
+    <div id="cloudStatus" role="status">اطلاعات فعلاً روی همین گوشی ذخیره می‌شود. برای اتصال، تنظیمات عمومی Supabase باید در cloud-config.js وارد شود.</div>
+  </section>
+
   <div class="header">
     <div class="header-inner">
       <div class="logo-wrap">
@@ -3416,6 +3444,99 @@
       updateBrandFilters();
       renderDaily();
     }
+
+
+    // ==================== SUPABASE CLOUD BRIDGE (MANAGER TEST) ====================
+    const CLOUD_WAREHOUSE_ID = "amin";
+    let cloudClient = null;
+    let cloudUser = null;
+    function cloudStatus(msg, bad=false){
+      const el=document.getElementById('cloudStatus');
+      if(el){el.textContent=msg;el.style.color=bad?'#b42318':'#555';}
+    }
+    function cloudInit(){
+      const cfg=window.WAREHOUSE_CLOUD_CONFIG||{};
+      if(!window.supabase || !cfg.url || !cfg.anonKey){
+        cloudStatus('اتصال هنوز تنظیم نشده است؛ آدرس پروژه و کلید عمومی Publishable باید در cloud-config.js قرار بگیرد.',true);
+        return false;
+      }
+      cloudClient=window.supabase.createClient(cfg.url,cfg.anonKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+      cloudClient.auth.getSession().then(({data,error})=>{
+        if(error){cloudStatus('خطای بررسی نشست: '+error.message,true);return;}
+        if(data.session) cloudVerifyMembership();
+      });
+      return true;
+    }
+    async function cloudLogin(){
+      if(!cloudClient && !cloudInit()) return;
+      const email=document.getElementById('cloudEmail').value.trim();
+      const password=document.getElementById('cloudPassword').value;
+      if(!email||!password){cloudStatus('ایمیل و رمز عبور را وارد کن.',true);return;}
+      cloudStatus('در حال ورود...');
+      const {data,error}=await cloudClient.auth.signInWithPassword({email,password});
+      if(error){cloudStatus('ورود ناموفق: '+error.message,true);return;}
+      await cloudVerifyMembership();
+    }
+    async function cloudVerifyMembership(){
+      if(!cloudClient)return;
+      cloudStatus('در حال بررسی دسترسی این حساب...');
+      const {data:{user},error:authError}=await cloudClient.auth.getUser();
+      if(authError||!user){cloudStatus('حساب واردشده معتبر نیست.',true);return;}
+      const {data:membership,error}=await cloudClient.from('warehouse_memberships')
+        .select('role').eq('warehouse_id',CLOUD_WAREHOUSE_ID).eq('user_id',user.id).maybeSingle();
+      if(error){cloudStatus('خطا در بررسی عضویت: '+error.message,true);return;}
+      if(!membership){cloudStatus('برای این انبار عضویت فعالی پیدا نشد.',true);return;}
+      if(membership.role!=='manager'){
+        cloudStatus('این نسخه آزمایشی فعلاً فقط برای مدیر است؛ نقش حساب شما: '+membership.role,true);return;
+      }
+      cloudUser=user;
+      document.getElementById('cloudLoginFields').style.display='none';
+      document.getElementById('cloudActions').style.display='flex';
+      cloudStatus('ورود مدیر تأیید شد. دریافت و ارسال اطلاعات فقط با دکمه‌های زیر و با تأیید شما انجام می‌شود.');
+    }
+    async function cloudPull(){
+      if(!cloudClient||!cloudUser){cloudStatus('ابتدا وارد حساب مدیر شو.',true);return;}
+      if(!confirm('اطلاعات فعلی این گوشی با نسخه سرور جایگزین می‌شود. قبل از ادامه از اطلاعات فعلی پشتیبان بگیر. ادامه می‌دهی؟'))return;
+      cloudStatus('در حال دریافت اطلاعات از سرور...');
+      const {data,error}=await cloudClient.from('warehouse_private_state').select('state,updated_at').eq('warehouse_id',CLOUD_WAREHOUSE_ID).maybeSingle();
+      if(error){cloudStatus('دریافت ناموفق: '+error.message,true);return;}
+      if(!data){cloudStatus('هنوز اطلاعاتی برای این انبار روی سرور ثبت نشده است. برای انتقال اطلاعات این گوشی از «ارسال نسخه فعلی» استفاده کن.',true);return;}
+      const remote=data.state;
+      if(!remote||!Array.isArray(remote.items)||!Array.isArray(remote.waybills)){
+        cloudStatus('ساختار اطلاعات سرور با برنامه سازگار نیست؛ هیچ داده‌ای تغییر نکرد.',true);return;
+      }
+      state=remote;
+      saveState();
+      renderAll();
+      if(typeof refreshItemList==='function')refreshItemList();
+      if(typeof loadSettingsToForm==='function')loadSettingsToForm();
+      cloudStatus('دریافت موفق بود. آخرین به‌روزرسانی سرور: '+new Date(data.updated_at).toLocaleString('fa-IR'));
+    }
+    async function cloudPush(){
+      if(!cloudClient||!cloudUser){cloudStatus('ابتدا وارد حساب مدیر شو.',true);return;}
+      if(!confirm('نسخه فعلی این گوشی در سرور ذخیره می‌شود و اطلاعات قبلی سرور را جایگزین می‌کند. فقط اگر از صحت اطلاعات مطمئنی ادامه بده.'))return;
+      cloudStatus('در حال ارسال اطلاعات به سرور...');
+      const payload=JSON.parse(JSON.stringify(state));
+      const {data:existing,error:readError}=await cloudClient.from('warehouse_private_state')
+        .select('warehouse_id').eq('warehouse_id',CLOUD_WAREHOUSE_ID).maybeSingle();
+      if(readError){cloudStatus('بررسی وضعیت سرور ناموفق: '+readError.message,true);return;}
+      let result;
+      if(existing){
+        result=await cloudClient.from('warehouse_private_state').update({state:payload,updated_at:new Date().toISOString()}).eq('warehouse_id',CLOUD_WAREHOUSE_ID);
+      }else{
+        result=await cloudClient.from('warehouse_private_state').insert({warehouse_id:CLOUD_WAREHOUSE_ID,state:payload,updated_at:new Date().toISOString()});
+      }
+      if(result.error){cloudStatus('ارسال ناموفق: '+result.error.message,true);return;}
+      cloudStatus('ارسال اطلاعات کامل شد. برای اطمینان، یک بار «دریافت از سرور» را هم آزمایش کن.');
+    }
+    async function cloudLogout(){
+      if(cloudClient) await cloudClient.auth.signOut();
+      cloudUser=null;
+      document.getElementById('cloudLoginFields').style.display='flex';
+      document.getElementById('cloudActions').style.display='none';
+      cloudStatus('از حساب آنلاین خارج شدی. اطلاعات محلی گوشی تغییر نکرد.');
+    }
+    cloudInit();
 
     // ==================== INIT ====================
     document.getElementById('wbDate').value = todayISO();
