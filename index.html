@@ -828,6 +828,7 @@
           if (parsed && Array.isArray(parsed.items) && Array.isArray(parsed.waybills)) {
             state = parsed;
             if (!state.settings) state.settings = { ...DEFAULT_SETTINGS };
+    if (!state.settings.minStock) state.settings.minStock = {};
             if (!Array.isArray(state.incomings)) state.incomings = [];
             return true;
           }
@@ -2182,7 +2183,7 @@
 
     const DCOLS = [
       { k: 'code', t: 'کد طرح', d: true, cell: i => esc(i.code) },
-      { k: 'name', t: 'نام طرح', d: true, right: true, cell: i => esc(i.name) + ' <span style="font-size:9px;color:#666">' + esc(i.brand === 'سایر' ? (i.description || '') : i.brand) + '</span>' },
+      { k: 'name', t: 'نام طرح', d: true, always: true, right: true, cell: i => esc(i.name) + ' <span style="font-size:9px;color:#666">' + esc(i.brand === 'سایر' ? (i.description || '') : i.brand) + '</span>' },
       { k: 'size', t: 'سایز', d: true, cell: i => esc(i.size) },
       { k: 'grade', t: 'گرید', d: true, cell: i => esc(gradeShow(i.grade)) },
       { k: 'loc', t: 'جایگاه', d: false, cell: i => esc(i.location || '') },
@@ -2195,7 +2196,7 @@
     ];
     const RCOLS = [
       { k: 'code', t: 'کد', d: true, cell: it => esc(it.code || '') },
-      { k: 'name', t: 'نام طرح', d: true, right: true, cell: it => esc(it.name || '') },
+      { k: 'name', t: 'نام طرح', d: true, always: true, right: true, cell: it => esc(it.name || '') },
       { k: 'size', t: 'سایز', d: true, cell: it => esc(it.size || '') },
       { k: 'grade', t: 'گرید', d: true, cell: it => esc(gradeShow(it.grade)) },
       { k: 'loc', t: 'جایگاه', d: false, cell: it => esc(it.location || '') },
@@ -2315,7 +2316,7 @@
           items.forEach(i => {
             n++;
             const cartons = calcCartons(i.stockM2, i.m2PerCarton);
-            const min = state.settings.minStock[i.size] || 0;
+            const min = (state.settings.minStock || {})[i.size] || 0;
             const isLow = min > 0 && i.stockM2 <= min;
             const { pallets, remain } = calcPallets(cartons, i.cartonsPerPallet);
             let packStr = faNum(cartons, 0) + 'K';
@@ -3371,6 +3372,7 @@
           }
           state = parsed;
           if (!state.settings) state.settings = { ...DEFAULT_SETTINGS };
+    if (!state.settings.minStock) state.settings.minStock = {};
           saveState();
           renderAll();
           loadSettingsToForm();
@@ -3505,7 +3507,14 @@
       if(!remote||!Array.isArray(remote.items)||!Array.isArray(remote.waybills)){
         cloudStatus('ساختار اطلاعات سرور با برنامه سازگار نیست؛ هیچ داده‌ای تغییر نکرد.',true);return;
       }
-      state=remote;
+      try{
+        const backupKey='amin_backup_before_pull_'+new Date().toISOString().replace(/[:.]/g,'-');
+        localStorage.setItem(backupKey,JSON.stringify(state));
+      }catch(e){cloudStatus('پشتیبان محلی ساخته نشد؛ دریافت لغو شد: '+e.message,true);return;}
+      const fixedRemote=Object.assign({items:[],waybills:[],incomings:[],cash:[],shifts:[],dayNotes:{},shiftNotes:{}},remote);
+      fixedRemote.settings=Object.assign({},DEFAULT_SETTINGS,remote.settings||{});
+      fixedRemote.settings.minStock=Object.assign({},(DEFAULT_SETTINGS&&DEFAULT_SETTINGS.minStock)||{},fixedRemote.settings.minStock||{});
+      state=fixedRemote;
       saveState();
       renderAll();
       if(typeof refreshItemList==='function')refreshItemList();
@@ -3541,6 +3550,14 @@
     // ==================== INIT ====================
     document.getElementById('wbDate').value = todayISO();
     updateWbDateLabel();
+    (function(){
+      const cfg = window.WAREHOUSE_CLOUD_CONFIG || {};
+      const hasKey = typeof cfg.anonKey === 'string' && cfg.anonKey.trim() !== '' && !/PASTE_/.test(cfg.anonKey);
+      if (!hasKey) {
+        document.body.classList.add('manager-authenticated');
+        const p = document.getElementById('cloudPanel'); if (p) p.style.display = 'none';
+      }
+    })();
     loadState();
     renderAll();
     applyFont();
