@@ -1005,7 +1005,10 @@
             const m2c = parseFloat(numFa(row['متراژ هر کارتن'] ?? 0)) || 0;
             const wgt = parseFloat(numFa(row['وزن هر کارتن'] ?? 0)) || 0;
       const valM2 = parseFloat(String(row['ارزش'] ?? 0).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d)).replace(/٫/g, '.').replace(/,|٬/g, '')) || 0;
-            const stock = parseFloat(numFa(row['موجودی نهایی (متراژ)'] ?? row['موجودی نهایی'] ?? row['موجودی'] ?? 0)) || 0;
+            const stockRaw = pickCol(row, ['موجودی نهایی (متراژ)', 'موجودی نهایی', 'موجودی', 'متراژ کل']);
+            const cartonsRaw = pickCol(row, ['کل کارتن']);
+            if (stockRaw === '' && cartonsRaw === '') return; // no stock column in this row: never overwrite stock with zero
+            const stock = stockRaw !== '' ? (parseFloat(numFa(stockRaw)) || 0) : ((parseFloat(numFa(cartonsRaw)) || 0) * m2c);
             let loc = String(row['جایگاه نهایی'] ?? row['جایگاه'] ?? '').trim();
             let desc = String(row['توضیحات'] ?? '').trim();
 
