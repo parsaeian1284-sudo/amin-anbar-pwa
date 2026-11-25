@@ -626,6 +626,14 @@
 
     <!-- ========== TAB: تنظیمات ========== -->
     <div class="tab-content" id="tab-settings">
+       <div class="card" id="reviewCard" style="border:2px solid #c9a227">
+         <h3>بازبینی اطلاعات (برای مقایسه بعد از بازیابی)</h3>
+         <div style="font-size:12px;color:#555;margin-bottom:6px">اگر برنامه پاک شد یا روی گوشی جدید بازیابی کردید، با این خلاصه مطمئن می‌شوید همه‌چیز برگشته است.</div>
+         <button class="btn btn-primary btn-block" onclick="showReviewSummary()">نمایش خلاصه اطلاعات</button>
+         <button class="btn btn-outline btn-block" style="margin-top:6px" onclick="copyReviewSummary()">کپی خلاصه</button>
+         <div id="reviewSummary" style="margin-top:8px;font-size:12.5px;white-space:pre-line;background:#fbf6ea;border-radius:8px;padding:8px"></div>
+       </div>
+       
       <div class="card">
         <h3>تنظیمات انبار</h3>
         <label>👤 نام مسئول انبار (بالای گزارش‌ها)</label>
@@ -1121,6 +1129,11 @@
       if (!it) return;
       const f = (label, key, type, step) => '<div><label>' + label + '</label><input data-k="' + key + '" type="' + (type || 'text') + '"' +
         (step ? ' step="' + step + '"' : '') + ' value="' + esc(it[key] == null ? '' : it[key]) + '" /></div>';
+      const sheetArea = (function(){ const p = String(it.size||'').replace(/[*xX]/g,'×').split('×').map(v=>parseFloat(String(v).replace(/[۰-۹]/g,d=>'۰۱۲۳۴۵۶۷۸۹'.indexOf(d)))); return (p.length===2 && p[0]>0 && p[1]>0) ? (p[0]*p[1])/10000 : 0; })();
+      const m2c0 = Number(it.m2PerCarton)||0;
+      const initC = m2c0>0 ? Math.floor(Number(it.stockM2)/m2c0 + 1e-9) : 0;
+      const remM2 = Number(it.stockM2) - initC*m2c0;
+      const initS = sheetArea>0 ? Math.round(remM2/sheetArea) : 0;
       const ov = document.createElement('div');
       ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100002;display:flex;align-items:flex-end;justify-content:center';
       ov.innerHTML = '<div style="background:#fff;border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:560px;max-height:90vh;overflow:auto;direction:rtl">' +
@@ -1128,6 +1141,8 @@
         '<div class="row">' + f('کد طرح', 'code') + f('نام طرح', 'name') + '</div>' +
         '<div class="row">' + f('سایز', 'size') + f('گرید / درجه', 'grade') + '</div>' +
         '<div class="row">' + f('متراژ موجود', 'stockM2', 'number', '0.01') + f('متراژ هر کارتن', 'm2PerCarton', 'number', '0.01') + '</div>' +
+        '<div class="row"><div><label>کارتن موجود</label><input data-k="cartonsVirt" data-orig="'+String(initC)+'" type="number" step="1" value="'+String(initC)+'" /></div><div><label>برگ اضافه (تک‌تایل)</label><input data-k="sheetsVirt" data-orig="'+String(initS)+'" type="number" step="1" value="'+String(initS)+'" /></div></div>' +
+        '<div style="font-size:11px;color:#666;margin:-4px 0 6px">اگر کارتن یا برگ را عوض کنید، متراژ خودکار حساب می‌شود. برگ = یک تکه کاشی به اندازه سایز.</div>' +
         '<div class="row">' + f('کارتن در پالت', 'cartonsPerPallet', 'number') + f('وزن هر کارتن (کیلو)', 'weightPerCarton', 'number', '0.01') + '</div>' +
         '<div class="row">' + f('ارزش هر متر مربع', 'valuePerM2', 'number', '1') + '</div>' +
         '<div class="row">' + f('جایگاه', 'location') + f('توضیحات / برند', 'description') + '</div>' +
@@ -1140,8 +1155,16 @@
         const code = get('code'), name = get('name');
         if (!code || !name) { toast('کد و نام الزامی است'); return; }
         it.code = code; it.name = name; it.size = get('size'); it.grade = get('grade');
-        it.stockM2 = Math.max(0, Number(get('stockM2')) || 0);
         it.m2PerCarton = Math.max(0, Number(get('m2PerCarton')) || 0);
+        const cartonsChanged = get('cartonsVirt') !== ov.querySelector('[data-k="cartonsVirt"]').dataset.orig;
+        const sheetsChanged = get('sheetsVirt') !== ov.querySelector('[data-k="sheetsVirt"]').dataset.orig;
+        const sheetAreaS = (function(){ const p = String(it.size||'').replace(/[*xX]/g,'×').split('×').map(v=>parseFloat(v)); return (p.length===2 && p[0]>0 && p[1]>0) ? (p[0]*p[1])/10000 : 0; })();
+        if (cartonsChanged || sheetsChanged) {
+          const c = Math.max(0, Number(get('cartonsVirt')) || 0), s = Math.max(0, Number(get('sheetsVirt')) || 0);
+          it.stockM2 = +(c * it.m2PerCarton + s * sheetAreaS).toFixed(4);
+        } else {
+          it.stockM2 = Math.max(0, Number(get('stockM2')) || 0);
+        }
         it.cartonsPerPallet = Math.max(0, Math.floor(Number(get('cartonsPerPallet')) || 0));
         it.weightPerCarton = Math.max(0, Number(get('weightPerCarton')) || 0);
         it.location = get('location'); it.description = get('description');
@@ -1541,9 +1564,18 @@
         return '<div class="wl" data-idx="' + idx + '" style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><input class="wl-item" list="wlItems" value="' + esc(it.code ? itemLabel(it) : '') + '" style="flex:2" /><input class="wl-c" type="number" min="0" step="0.01" value="' + l.cartons + '" style="width:90px" /></div>';
       }).join('');
       const opts = state.items.map(i => '<option value="' + esc(itemLabel(i)) + '"></option>').join('');
-      ov.innerHTML = '<div style="background:#fff;border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:560px;max-height:90vh;overflow:auto;direction:rtl"><div style="font-weight:700;color:#1b2a4a;font-size:16px">ویرایش کالاهای حواله ' + esc(wb.no) + '</div><div style="font-size:12px;color:#555;margin:4px 0 8px">کالا یا تعداد را تغییر دهید. موجودی به‌صورت خودکار اصلاح می‌شود.</div>' + rowsHtml + '<datalist id="wlItems">' + opts + '</datalist><div style="display:flex;gap:8px;margin-top:10px"><button id="wlSave" class="btn btn-primary" style="flex:1">ذخیره</button><button id="wlCancel" class="btn btn-outline" style="flex:1">انصراف</button></div></div>';
+      ov.innerHTML = '<div style="background:#fff;border-radius:18px 18px 0 0;padding:16px;width:100%;max-width:560px;max-height:90vh;overflow:auto;direction:rtl"><div style="font-weight:700;color:#1b2a4a;font-size:16px">ویرایش کالاهای حواله ' + esc(wb.no) + '</div><div style="font-size:12px;color:#555;margin:4px 0 8px">کالا یا تعداد را تغییر دهید. موجودی به‌صورت خودکار اصلاح می‌شود.</div>' + rowsHtml + '<button id="wlAdd" class="btn btn-outline" style="width:100%;margin-bottom:8px">+ افزودن ردیف کالا</button><datalist id="wlItems">' + opts + '</datalist><div style="display:flex;gap:8px;margin-top:10px"><button id="wlSave" class="btn btn-primary" style="flex:1">ذخیره</button><button id="wlCancel" class="btn btn-outline" style="flex:1">انصراف</button></div></div>';
       document.body.appendChild(ov);
       ov.querySelector('#wlCancel').onclick = () => ov.remove();
+      ov.querySelector('#wlAdd').onclick = () => {
+        const box = ov.querySelectorAll('.wl').length;
+        const row = document.createElement('div');
+        row.className = 'wl'; row.dataset.idx = String(box);
+        row.style.cssText = 'display:flex;gap:6px;align-items:center;margin-bottom:6px';
+        row.innerHTML = '<input class="wl-item" list="wlItems" placeholder="کد یا نام کالا" style="flex:2" /><input class="wl-c" type="number" min="0" step="0.01" value="" placeholder="کارتن" style="width:90px" />';
+        ov.querySelector('#wlAdd').parentElement.insertBefore(row, ov.querySelector('#wlAdd'));
+        row.querySelector('.wl-item').focus();
+      };
       ov.querySelector('#wlSave').onclick = () => {
         const newLines = [];
         ov.querySelectorAll('.wl').forEach(row => {
@@ -2984,6 +3016,44 @@
         state.settings.stockSig = url; saveState(); input.value = ''; toast('امضای مسئول انبار ذخیره شد'); storageInfo();
       }).catch(() => toast('امضا ذخیره نشد'));
     }
+
+    function reviewSummaryText() {
+      const items = state.items || [];
+      const sale = (state.waybills || []).filter(w => w.kind !== 'return' && w.kind !== 'breakage');
+      const brk = (state.waybills || []).filter(w => w.kind === 'breakage');
+      const ret = (state.waybills || []).filter(w => w.kind === 'return');
+      const totalM2 = items.reduce((s, i) => s + (Number(i.stockM2) || 0), 0);
+      const lastW = (state.waybills || []).slice().sort((a, b) => String(b.date).localeCompare(String(a.date)))[0];
+      const lastBk = Number(localStorage.getItem('lastBackupAt') || 0);
+      const lines = [
+        'خلاصه اطلاعات انبار — ' + new Date().toLocaleString('fa-IR'),
+        '────────────────',
+        'تعداد کالاها: ' + items.length,
+        'جمع متراژ موجودی: ' + totalM2.toFixed(2) + ' متر مربع',
+        'حواله‌های خروجی: ' + sale.length,
+        'حواله‌های شکستگی: ' + brk.length,
+        'برگشتی‌ها: ' + ret.length,
+        'حواله‌های ورودی از شرکت: ' + (state.incomings || []).length,
+        'ردیف‌های صندوق: ' + (state.cash || []).length,
+        'ثبت شیفت انباردارها: ' + (state.shifts || []).length,
+        'آخرین حواله: ' + (lastW ? ('#' + lastW.no + ' — ' + lastW.date) : '—'),
+        'آخرین پشتیبان: ' + (lastBk ? new Date(lastBk).toLocaleString('fa-IR') : 'هنوز پشتیبان گرفته نشده'),
+        '────────────────',
+        'بعد از بازیابی، همین خلاصه را دوباره بگیرید و مقایسه کنید.'
+      ];
+      return lines.join('\n');
+    }
+    function showReviewSummary() {
+      document.getElementById('reviewSummary').textContent = reviewSummaryText();
+    }
+    function copyReviewSummary() {
+      const t = reviewSummaryText();
+      showReviewSummary();
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(t).then(() => toast('خلاصه کپی شد'), () => toast('کپی انجام نشد؛ متن را از کادر بالا انتخاب کنید'));
+      } else { toast('متن خلاصه را از کادر بالا انتخاب و کپی کنید'); }
+    }
+
     function markBackup() { localStorage.setItem('lastBackupAt', String(Date.now())); hideBackupBanner(); }
     function backupChoice() {
       const data = JSON.stringify(state, null, 2);
@@ -3529,6 +3599,24 @@
       if(!confirm('نسخه فعلی این گوشی در سرور ذخیره می‌شود و اطلاعات قبلی سرور را جایگزین می‌کند. فقط اگر از صحت اطلاعات مطمئنی ادامه بده.'))return;
       cloudStatus('در حال ارسال اطلاعات به سرور...');
       const payload=JSON.parse(JSON.stringify(state));
+      const inventoryRows=(state.items||[]).map(item=>({
+        warehouse_id:CLOUD_WAREHOUSE_ID,
+        item_id:String(item.id||item.code||''),
+        code:String(item.code||''),
+        name:String(item.name||''),
+        size:String(item.size||''),
+        grade:String(item.grade||''),
+        stock_m2:Number(item.stockM2||0),
+        brand:String(item.brand||''),
+        m2_per_carton:Number(item.m2PerCarton||0),
+        cartons_per_pallet:Number(item.cartonsPerPallet||0),
+        weight_per_carton:Number(item.weightPerCarton||0),
+        location:String(item.location||''),
+        description:String(item.description||''),
+        updated_at:new Date().toISOString()
+      }));
+      const {error:publishError}=await cloudClient.rpc('publish_inventory',{p_warehouse_id:CLOUD_WAREHOUSE_ID,p_rows:inventoryRows});
+      if(publishError){cloudStatus('ارسال موجودی ناموفق؛ هیچ تغییری روی سرور اعمال نشد: '+publishError.message,true);return;}
       const {data:existing,error:readError}=await cloudClient.from('warehouse_private_state')
         .select('warehouse_id').eq('warehouse_id',CLOUD_WAREHOUSE_ID).maybeSingle();
       if(readError){cloudStatus('بررسی وضعیت سرور ناموفق: '+readError.message,true);return;}
