@@ -479,6 +479,7 @@
           </div>
         </div>
         <div class="card" style="margin:8px 0"><label>توضیحات دستی این روز (در گزارش موجودی روزانه چاپ می‌شود)</label><textarea id="dayNote" rows="3" placeholder="مثلاً: امروز بارگیری کند بود، ماشین نرسید..." oninput="saveDayNote()"></textarea></div>
+        <div style="margin:6px 0"><button class="btn btn-outline btn-block" onclick="sendStockReport()">ارسال گزارش موجودی به کانال تلگرام</button></div>
         <div class="stats" id="dailyStats"></div>
         <div class="table-wrap" id="dailyTableWrap"></div>
         <div class="row" style="margin-top:10px">
@@ -3418,6 +3419,33 @@
       if (kg <= 3000) return 'کامیونت / کامیون کوچک (تا ۳۰۰۰ کیلو)';
       if (kg <= 8000) return 'کامیون متوسط (تا ۸۰۰۰ کیلو)';
       return 'کامیون بزرگ یا بیش از یک ماشین';
+    }
+
+
+    function buildStockText(minM2) {
+      const min = Number(minM2) || 0;
+      const items = (state.items || []).filter(i => (Number(i.stockM2) || 0) >= min);
+      const now = new Date().toLocaleString('fa-IR');
+      const brandName = (state.settings && (state.settings.headerMain || '')) || 'موجودی انبار';
+      const bySize = {};
+      items.forEach(i => { const s = i.size || 'نامشخص'; (bySize[s] = bySize[s] || { n: 0, m2: 0 }); bySize[s].n++; bySize[s].m2 += Number(i.stockM2) || 0; });
+      const total = items.reduce((s, i) => s + (Number(i.stockM2) || 0), 0);
+      const lines = [brandName, 'موجودی به تاریخ ' + now, '────────────────'];
+      Object.keys(bySize).sort((a, b) => { const p = x => x.split('×').reduce((m, v) => m * (parseFloat(v) || 1), 1); return p(a) - p(b); })
+        .forEach(s => lines.push('سایز ' + s + ': ' + bySize[s].n + ' قلم — ' + bySize[s].m2.toFixed(2) + ' متر'));
+      lines.push('────────────────');
+      lines.push('جمع کل: ' + items.length + ' قلم — ' + total.toFixed(2) + ' متر مربع');
+      if (min > 0) lines.push('(فقط کالاهای با متراژ ' + min + ' متر به بالا)');
+      return lines.join('\n');
+    }
+    function sendStockReport() {
+      const url = state.settings && state.settings.webhookUrl;
+      if (!url) { toast('ابتدا آدرس کانال (webhook) را در تنظیمات بگذارید'); return; }
+      const ans = prompt('حداقل متراژ هر کالا برای ارسال (خالی = همه کالاها):', '');
+      if (ans === null) return;
+      const minM2 = parseFloat(String(ans).replace(/[۰-۹]/g, d => '۰۱۲۳۴۵۶۷۸۹'.indexOf(d))) || 0;
+      sendToChannel({ type: 'stock', text: buildStockText(minM2) });
+      toast('گزارش موجودی به کانال فرستاده شد');
     }
 
     function sendToChannel(payload) {
