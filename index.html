@@ -2895,9 +2895,7 @@
     function shareMonthlyPdf(kind) {
       const p = monthlyPick_(); if (!p.y || !p.m) { toast('ماه را انتخاب کنید'); return; }
       const html = '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px">' + reportHeaderHtml() + monthlyHtml_(kind) + '</div>';
-      const name = (kind === 'out' ? 'گزارش-خروجی-' : 'گزارش-ورودی-') + p.y + '-' + p.m + '.pdf';
-      toast('در حال ساخت PDF...');
-      generatePDF(html, name).then(blob => { if (blob) showSendBar(blob, name, 'گزارش ماهانه'); });
+      sharePdfFromHtml_(html, (kind === 'out' ? 'گزارش-خروجی-' : 'گزارش-ورودی-') + p.y + '-' + p.m + '.pdf', 'گزارش ماهانه');
     }
     function renderMonthly() {
       const sel = document.getElementById('mrMonthWrap'); if (sel) sel.innerHTML = monthlySelectHtml_();
@@ -3105,6 +3103,65 @@
       else { __toastVoice(m); }
       if (ev && (c.audio || c.speak)) playVoiceEvent_(ev);
     };
+
+
+    // ===== PDF داخل برنامه (بدون کتابخانه‌ی خارجی) =====
+    async function renderHtmlToJpeg_(html) {
+      const W = 794;
+      const host = document.createElement('div');
+      host.style.cssText = 'position:fixed;left:-10000px;top:0;width:' + W + 'px;background:#fff;direction:rtl;';
+      host.innerHTML = html; document.body.appendChild(host);
+      await new Promise(r => setTimeout(r, 120));
+      const H = Math.max(200, Math.ceil(host.scrollHeight)); document.body.removeChild(host);
+      const parsed = new DOMParser().parseFromString('<div>' + html + '</div>', 'text/html').body.firstElementChild;
+      const inner = new XMLSerializer().serializeToString(parsed);
+      const xhtml = '<div xmlns="http://www.w3.org/1999/xhtml" style="width:' + W + 'px;height:' + H + 'px;background:#fff;direction:rtl;font-family:Vazirmatn,Tahoma,Arial,sans-serif;color:#111;">' + inner + '</div>';
+      const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + W + '" height="' + H + '"><foreignObject x="0" y="0" width="' + W + '" height="' + H + '">' + xhtml + '</foreignObject></svg>';
+      const img = new Image();
+      await new Promise((res, rej) => { img.onload = res; img.onerror = () => rej(new Error('رندر گزارش ناموفق بود')); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+      const S = 2, cv = document.createElement('canvas'); cv.width = W * S; cv.height = H * S;
+      const ctx = cv.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, cv.width, cv.height);
+      ctx.scale(S, S); ctx.drawImage(img, 0, 0, W, H);
+      const jpeg = await new Promise((res, rej) => cv.toBlob(b => b ? res(b) : rej(new Error('تبدیل تصویر ناموفق بود')), 'image/jpeg', 0.92));
+      return { bytes: new Uint8Array(await jpeg.arrayBuffer()), pw: cv.width, ph: cv.height, W: W, H: H };
+    }
+    function buildPdfFromJpeg_(im) {
+      const enc = new TextEncoder(), parts = [], offs = [];
+      let len = 0;
+      const push = x => { const b = typeof x === 'string' ? enc.encode(x) : x; parts.push(b); len += b.length; };
+      const wpt = (im.W * 0.75).toFixed(2), hpt = (im.H * 0.75).toFixed(2);
+      const content = enc.encode('q ' + wpt + ' 0 0 ' + hpt + ' 0 0 cm /Im0 Do Q');
+      push('%PDF-1.4\n');
+      const objs = {
+        1: '<< /Type /Catalog /Pages 2 0 R >>',
+        2: '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+        3: '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ' + wpt + ' ' + hpt + '] /Resources << /XObject << /Im0 5 0 R >> >> /Contents 4 0 R >>'
+      };
+      for (let n = 1; n <= 5; n++) {
+        offs[n] = len;
+        if (n === 4) { push('4 0 obj\n<< /Length ' + content.length + ' >>\nstream\n'); push(content); push('\nendstream\nendobj\n'); }
+        else if (n === 5) { push('5 0 obj\n<< /Type /XObject /Subtype /Image /Width ' + im.pw + ' /Height ' + im.ph + ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ' + im.bytes.length + ' >>\nstream\n'); push(im.bytes); push('\nendstream\nendobj\n'); }
+        else push(n + ' 0 obj\n' + objs[n] + '\nendobj\n');
+      }
+      const xref = len;
+      let x = 'xref\n0 6\n0000000000 65535 f \n';
+      for (let n = 1; n <= 5; n++) x += String(offs[n]).padStart(10, '0') + ' 00000 n \n';
+      push(x);
+      push('trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n' + xref + '\n%%EOF');
+      const out = new Uint8Array(len); let p = 0;
+      parts.forEach(b => { out.set(b, p); p += b.length; });
+      return new Blob([out], { type: 'application/pdf' });
+    }
+    async function makePdfFromHtml_(html) { return buildPdfFromJpeg_(await renderHtmlToJpeg_(html)); }
+    async function sharePdfFromHtml_(html, name, title) {
+      toast('در حال ساخت PDF...');
+      try {
+        const blob = await makePdfFromHtml_(html);
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); a.remove();
+        showSendBar(blob, name, title);
+      } catch (e) { toast('ساخت PDF ناموفق: ' + (e.message || e)); }
+    }
 
     function showMore(which) {
       ['recon','cash','shift','book','import','pick','sizeref','returns','monthly'].forEach(k => { const el = document.getElementById('more-' + k); if (el) el.style.display = k === which ? 'block' : 'none'; });
@@ -3557,9 +3614,7 @@
         function shareWaybillPDF(id) {
       const wb = state.waybills.find(w => w.id === id);
       if (!wb) { toast('حواله پیدا نشد'); return; }
-      const name = 'حواله-' + wb.no + '.pdf';
-      toast('در حال ساخت PDF...');
-      generatePDF(buildReceiptHtml(wb, false), name).then(blob => { if (blob) showSendBar(blob, name, 'حواله ' + wb.no); });
+      sharePdfFromHtml_(buildReceiptHtml(wb, false), 'حواله-' + wb.no + '.pdf', 'حواله ' + wb.no);
     }
 
     function showSendBar(blob, name, title) {
@@ -3598,9 +3653,7 @@
       const wrap = document.getElementById('dailyTableWrap');
       if (!wrap || !wrap.innerHTML.trim()) { toast('ابتدا موجودی روزانه را نمایش دهید'); return; }
       const html = '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:8px">' + wrap.innerHTML + '</div>';
-      const name = 'موجودی-روزانه-' + todayISO() + '.pdf';
-      toast('در حال ساخت PDF...');
-      generatePDF(html, name).then(blob => { if (blob) showSendBar(blob, name, 'موجودی روزانه'); });
+      sharePdfFromHtml_(html, 'موجودی-روزانه-' + todayISO() + '.pdf', 'موجودی روزانه');
     }
 
         function printDaily() {
