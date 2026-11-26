@@ -244,7 +244,20 @@
       direction: rtl; opacity: 0; pointer-events: none;
       font-family: Tahoma, Vazirmatn, Arial, sans-serif;
     }
-  </style>
+  
+    @keyframes fadeUpSoft { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+    .tab-content.active { animation: fadeUpSoft .28s ease both; }
+    .card { transition: box-shadow .2s ease, transform .2s ease; }
+    .card:hover { box-shadow: 0 6px 18px rgba(0,0,0,.08); }
+    .btn { transition: transform .12s ease, filter .12s ease; }
+    .btn:active { transform: scale(.97); }
+    
+    .theme-dark body, body.theme-dark { background: #0f172a; color: #e5e7eb; }
+    .theme-dark .card, .theme-dark .stat, .theme-dark .msg { background: #1e293b !important; color: #e5e7eb; border-color: #334155 !important; }
+    .theme-dark input, .theme-dark select, .theme-dark textarea { background: #0f172a !important; color: #e5e7eb !important; border-color: #475569 !important; }
+    .theme-dark td { color: #e5e7eb; border-color: #334155 !important; }
+    .theme-dark .nav-bar, .theme-dark .bottom-nav { background: #111827 !important; }
+    </style>
 
   <style>
     #cloudPanel{margin:10px 12px;padding:12px;background:#fff;border:1px solid #d6dbe4;border-radius:12px;box-shadow:0 1px 3px #0000000d;font-family:inherit}
@@ -298,6 +311,10 @@
       <div id="uniResults" style="margin-top:8px"></div>
     </div>
     <div class="tab-content active" id="tab-inventory">
+      <div id="seasonBanner"></div>
+      <div class="card" style="border:2px dashed #f59e0b;background:#fffbeb"><h3>🧭 راهنمای جایگاه</h3><div style="display:flex;gap:6px"><input id="locSearch" placeholder="اسم یا کد کالا را بنویسید" style="flex:1"><button class="btn btn-primary" onclick="showLocationGuide()">بیاب!</button></div><div id="locGuideOut" style="margin-top:8px"></div></div>
+      <div class="card"><h3>نقشه جایگاه</h3><div style="font-size:12px;color:var(--muted);margin-bottom:6px">هر کادر یک جایگاه است؛ پررنگ‌تر یعنی متراژ بیشتر.</div><button class="btn btn-outline btn-block" onclick="document.getElementById('locMap').innerHTML=locationMapHtml()">نمایش نقشه جایگاه</button><div id="locMap" style="margin-top:8px"></div></div>
+
       <div class="card">
         <h3>ورود فایل Base</h3>
         <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleExcelImport(event)" />
@@ -500,6 +517,7 @@
           <button class="btn btn-outline btn-sm" onclick="showMore('import')">وارد کردن حواله از فایل</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('pick')">موجودی طرح‌های انتخابی</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('sizeref')">مشخصات سایزها</button>
+          <button class="btn btn-outline btn-sm" onclick="showMore('monthly')">گزارش ماهانه</button>
           <button class="btn btn-outline btn-sm" onclick="showMore('returns')">برگشتی مشتری</button>
           <button class="btn btn-outline btn-sm" onclick="printBreakage()">گزارش شکستگی ماه</button>
         </div>
@@ -526,6 +544,22 @@
           <div style="display:flex;gap:6px;margin:6px 0"><button class="btn btn-outline btn-sm" onclick="pickAll(true)">انتخاب همه</button><button class="btn btn-outline btn-sm" onclick="pickAll(false)">پاک کردن انتخاب</button></div>
           <div id="pickList" style="max-height:320px;overflow:auto"></div>
           <button class="btn btn-primary btn-block" style="margin-top:8px" onclick="pickPrint()">نمایش / چاپ / PDF موجودی انتخابی</button>
+        </div>
+      </div>
+
+      <div id="more-monthly" class="more-part" style="display:none">
+        <div class="card">
+          <h3>گزارش ماهانه (شمسی)</h3>
+          <div id="mrMonthWrap"></div>
+          <div style="display:flex;gap:6px;margin-top:8px">
+            <button class="btn btn-primary" style="flex:1" onclick="showMonthly('out')">گزارش خروجی</button>
+            <button class="btn btn-primary" style="flex:1" onclick="showMonthly('in')">گزارش ورودی</button>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:6px">
+            <button class="btn btn-outline" style="flex:1" onclick="shareMonthlyPdf('out')">PDF خروجی و ارسال</button>
+            <button class="btn btn-outline" style="flex:1" onclick="shareMonthlyPdf('in')">PDF ورودی و ارسال</button>
+          </div>
+          <div id="monthlyOut" style="margin-top:10px"></div>
         </div>
       </div>
 
@@ -627,6 +661,10 @@
 
     <!-- ========== TAB: تنظیمات ========== -->
     <div class="tab-content" id="tab-settings">
+       <div class="card" id="backupStatus"></div>
+       <div class="card"><h3>پیام‌ها و صدای برنامه</h3><div style="font-size:11px;color:#666;margin-bottom:6px">برای هر کار، متن یا صدای دلخواه خودتان را بگذارید. اگر خالی باشد، پیام پیش‌فرض نشان داده می‌شود.</div><div id="voiceCfgBox"></div></div>
+       <div class="card"><h3>لحن برنامه</h3><button id="toneBtn" class="btn btn-outline btn-block" onclick="toggleTone()">لحن دوستانه / رسمی</button><div style="font-size:11px;color:#666;margin-top:4px">حالت دوستانه پیام‌ها را گرم‌تر و شاد می‌کند.</div></div>
+       <div class="card"><h3>نمایش</h3><button id="themeBtn" class="btn btn-outline btn-block" onclick="toggleTheme()">حالت شب / روز</button></div>
        <div class="card" id="reviewCard" style="border:2px solid #c9a227">
          <h3>بازبینی اطلاعات (برای مقایسه بعد از بازیابی)</h3>
          <div style="font-size:12px;color:#555;margin-bottom:6px">اگر برنامه پاک شد یا روی گوشی جدید بازیابی کردید، با این خلاصه مطمئن می‌شوید همه‌چیز برگشته است.</div>
@@ -1411,6 +1449,7 @@
         '<div style="flex:1"><label>تعداد</label><div style="display:flex;gap:4px"><input type="number" class="wb-item-cartons" min="0" step="0.01" value="' + esc(cartons) + '" oninput="updateWbTotals()" style="flex:1" />' +
         '<select class="wb-unit" onchange="updateWbTotals()" style="width:auto"><option value="carton">کارتن</option><option value="m2">متراژ</option><option value="sheet">برگ</option></select></div></div>' +
         '<button class="btn btn-danger btn-sm" onclick="this.parentElement.remove();updateWbTotals()">×</button>';
+      const palHint = document.createElement('div'); palHint.className = 'wb-pal-hint'; palHint.style.cssText = 'font-size:11px;color:#666;margin:2px 0 6px'; row.appendChild(palHint);
       div.appendChild(row);
       updateWbTotals();
     }
@@ -1444,6 +1483,8 @@
         const id = itemIdFromLabel(row.querySelector('.wb-item-select').value);
         const c = lineCartons(row);
         const item = state.items.find(i => i.id === id);
+        const hint = row.querySelector('.wb-pal-hint');
+        if (hint) { const cpp = item ? Number(item.cartonsPerPallet || 0) : 0; hint.textContent = (item && c > 0 && cpp > 0) ? ('= ' + faNum(Math.floor(c / cpp), 0) + ' پالت و ' + faNum(Math.round((c - Math.floor(c / cpp) * cpp) * 100) / 100, 0) + ' کارتن (هر پالت ' + faNum(cpp, 0) + ' کارتن)') : ''; }
         if (item && c > 0) {
           totalCartons += c;
           totalM2 += c * (item.m2PerCarton || 0);
@@ -1607,6 +1648,7 @@
       ov.querySelector('#wvClose').onclick = () => ov.remove();
       ov.querySelector('#wvPrint').onclick = () => { ov.remove(); printReceipt(id); };
       ov.querySelector('#wvEdit').onclick = () => { ov.remove(); editWaybillInfo(id); };
+      const dupBtn = document.createElement('button'); dupBtn.className = 'btn btn-outline'; dupBtn.style.flex = '1'; dupBtn.textContent = 'حواله تکراری'; dupBtn.onclick = () => { ov.remove(); duplicateWaybill(id); }; ov.querySelector('#wvClose').parentElement.insertBefore(dupBtn, ov.querySelector('#wvClose'));
       const wl = document.createElement('button'); wl.className = 'btn btn-outline'; wl.style.flex = '1'; wl.textContent = 'ویرایش کالاها'; wl.onclick = () => { ov.remove(); editWaybillLines(id); }; ov.querySelector('#wvClose').parentElement.insertBefore(wl, ov.querySelector('#wvClose'));
     }
 
@@ -1636,6 +1678,24 @@
       };
     }
 
+    function duplicateWaybill(id) {
+      const wb = state.waybills.find(w => w.id === id);
+      if (!wb) return;
+      switchTab('newwaybill');
+      document.getElementById('wbCustomer').value = wb.customer || '';
+      document.getElementById('wbPhone').value = wb.phone || '';
+      document.getElementById('wbCity').value = wb.city || '';
+      document.getElementById('wbColleague').value = wb.colleague || '';
+      document.getElementById('wbDriverName').value = wb.driverName || '';
+      document.getElementById('wbDriverPhone').value = wb.driverPhone || '';
+      document.getElementById('wbDriver').value = wb.driverInfo || '';
+      document.getElementById('wbItems').innerHTML = '';
+      (wb.items || []).forEach(l => addWaybillItemRow(l.itemId, l.cartons));
+      if (!(wb.items || []).length) addWaybillItemRow();
+      updateWbTotals();
+      toast('حواله تکراری آماده شد؛ شماره و تعداد را تنظیم و ثبت کنید');
+    }
+
     function renderWaybills() {
       const filter = document.getElementById('wbFilterColleague')?.value || '';
       const list = state.waybills.filter(w => !filter || w.colleague === filter);
@@ -1649,6 +1709,7 @@
         const status = t.remain <= 0 ? '<span class="badge badge-done">تکمیل</span>' :
           t.totalLoaded > 0 ? '<span class="badge badge-pending">ناقص</span>' :
           '<span class="badge badge-ok">ثبت‌شده</span>';
+        const typeBadge = wb.kind === 'return' ? '<span class="badge" style="background:#f97316;color:#fff">برگشتی</span>' : wb.kind === 'breakage' ? '<span class="badge" style="background:#dc2626;color:#fff">شکستگی</span>' : '<span class="badge" style="background:#16a34a;color:#fff">خروجی</span>';
         const signed = (wb.signatures?.customer || wb.signatures?.warehouse) ?
           '<span class="badge badge-done">امضا دارد</span>' : '<span class="badge badge-pending">بدون امضا</span>';
         return '<div class="card" style="padding:12px;margin-bottom:10px">' +
@@ -1656,7 +1717,7 @@
           '<div><strong style="cursor:pointer;text-decoration:underline" onclick="openWaybillView(\'' + wb.id + '\')">#' + esc(wb.no) + '</strong> — ' + esc(wb.customer) +
           '<br><span style="font-size:12px;color:var(--muted)">' + faDate(wb.date) + ' | ' + esc(wb.city) +
           (wb.colleague ? ' | ' + esc(wb.colleague) : '') + '</span></div>' +
-          '<div>' + status + ' ' + signed + '</div></div>' +
+          '<div>' + typeBadge + ' ' + status + ' ' + signed + '</div></div>' +
           '<div style="font-size:12px;margin:8px 0">کارتن: ' + faNum(t.totalCartons, 0) +
           ' | بارگیری‌شده: ' + faNum(t.totalLoaded, 0) +
           ' | مانده: ' + faNum(t.remain, 0) +
@@ -2738,13 +2799,321 @@
         '</div></div>';
     }
 
+
+    // ==================== گزارش ماهانه (شمسی) ====================
+    const PERSIAN_MONTHS = ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
+    function jalaliYM(iso) {
+      const d = new Date(String(iso) + 'T12:00:00');
+      const p = new Intl.DateTimeFormat('en-u-ca-persian', { year: 'numeric', month: 'numeric', timeZone: 'Asia/Tehran' }).formatToParts(d);
+      return { y: Number(p.find(x => x.type === 'year').value), m: Number(p.find(x => x.type === 'month').value) };
+    }
+    function monthlyMonths_() {
+      const set = {};
+      const add = iso => { if (iso) { const k = jalaliYM(iso); set[k.y + '-' + k.m] = k; } };
+      (state.waybills || []).forEach(w => add(w.date));
+      (state.incomings || []).forEach(x => add(x.date));
+      const now = jalaliYM(todayISO());
+      set[now.y + '-' + now.m] = now;
+      return Object.values(set).sort((a, b) => (b.y - a.y) || (b.m - a.m));
+    }
+    function monthlySelectHtml_() {
+      return '<select id="mrMonth" class="full" style="width:100%">' + monthlyMonths_().map(k =>
+        '<option value="' + k.y + '-' + k.m + '">' + PERSIAN_MONTHS[k.m - 1] + ' ' + faNum(k.y, 0) + '</option>').join('') + '</select>';
+    }
+    function monthlyPick_() {
+      const v = (document.getElementById('mrMonth') || {}).value || '';
+      const [y, m] = v.split('-').map(Number);
+      return { y: y, m: m };
+    }
+    function itemOf_(id) { return (state.items || []).find(i => i.id === id) || null; }
+    function monthlyOutgoing_(y, m) {
+      const rows = {}; let cartons = 0, m2 = 0, value = 0, bills = 0, ret = 0, retM2 = 0, brk = 0, brkM2 = 0;
+      const custs = {};
+      (state.waybills || []).forEach(w => {
+        const k = jalaliYM(w.date); if (k.y !== y || k.m !== m) return;
+        if (w.kind === 'return') { (w.items || []).forEach(l => { const it = itemOf_(l.itemId) || {}; ret += Number(l.cartons) || 0; retM2 += (Number(l.cartons) || 0) * (Number(it.m2PerCarton) || 0); }); return; }
+        const isBrk = w.kind === 'breakage';
+        bills++;
+        (w.items || []).forEach(l => {
+          const it = itemOf_(l.itemId) || {};
+          const c = Number(l.cartons) || 0, mm = c * (Number(it.m2PerCarton) || 0), v = mm * (Number(it.valuePerM2) || 0);
+          if (isBrk) { brk += c; brkM2 += mm; return; }
+          const key = (it.name || l.name || '—') + '|' + (it.size || l.size || '') + '|' + (it.grade || '');
+          rows[key] = rows[key] || { name: it.name || l.name || '—', size: it.size || l.size || '', grade: it.grade || '', c: 0, m2: 0 };
+          rows[key].c += c; rows[key].m2 += mm;
+          cartons += c; m2 += mm; value += v;
+        });
+        if (!isBrk) { const cn = w.customer || '—'; custs[cn] = (custs[cn] || 0) + (w.items || []).reduce((s, l) => { const it = itemOf_(l.itemId) || {}; return s + (Number(l.cartons) || 0) * (Number(it.m2PerCarton) || 0); }, 0); }
+      });
+      const list = Object.values(rows).sort((a, b) => b.m2 - a.m2);
+      const topCust = Object.keys(custs).sort((a, b) => custs[b] - custs[a]).slice(0, 3);
+      return { list, cartons, m2, value, bills, ret, retM2, brk, brkM2, topCust, customers: Object.keys(custs).length };
+    }
+    function monthlyIncoming_(y, m) {
+      const rows = {}; let cartons = 0, m2 = 0, count = 0; const sup = {};
+      (state.incomings || []).forEach(x => {
+        const k = jalaliYM(x.date); if (k.y !== y || k.m !== m) return;
+        count++;
+        if (x.supplier) sup[x.supplier] = (sup[x.supplier] || 0) + 1;
+        (x.items || []).forEach(l => {
+          const c = Number(l.cartons) || 0, mm = Number(l.m2) || 0;
+          const key = (l.name || '—') + '|' + (l.size || '') + '|' + (l.grade || '');
+          rows[key] = rows[key] || { name: l.name || '—', size: l.size || '', grade: l.grade || '', c: 0, m2: 0 };
+          rows[key].c += c; rows[key].m2 += mm; cartons += c; m2 += mm;
+        });
+      });
+      return { list: Object.values(rows).sort((a, b) => b.m2 - a.m2), cartons, m2, count, suppliers: Object.keys(sup) };
+    }
+    function monthlyHtml_(kind) {
+      const p = monthlyPick_(); if (!p.y || !p.m) return '<div class="muted">ماه را انتخاب کنید</div>';
+      const title = (kind === 'out' ? 'گزارش خروجی (فروش)' : 'گزارش ورودی (خرید از شرکت)') + ' — ' + PERSIAN_MONTHS[p.m - 1] + ' ' + faNum(p.y, 0);
+      const th = 'border:1px solid #7d2519;padding:6px;background:#9b3a2c;color:#fff';
+      const td = 'border:1px solid #cbd5e1;padding:5px;text-align:center';
+      let body, summary, extra = '';
+      if (kind === 'out') {
+        const o = monthlyOutgoing_(p.y, p.m);
+        body = o.list.map(r => '<tr><td style="' + td + ';text-align:right">' + esc(r.name) + ' <span style="color:#888;font-size:10px">' + esc(r.size) + (r.grade ? ' · ' + esc(gradeShow(r.grade)) : '') + '</span></td><td style="' + td + '">' + fmtC(Math.round(r.c)) + '</td><td style="' + td + '">' + faNum(r.m2, 2) + '</td></tr>').join('');
+        summary = 'حواله‌ها: ' + faNum(o.bills, 0) + ' · جمع کارتن: ' + fmtC(Math.round(o.cartons)) + ' · جمع متراژ: ' + faNum(o.m2, 2) + ' · ارزش: ' + faNum(Math.round(o.value)) + ' · مشتری: ' + faNum(o.customers, 0);
+        if (o.list.length) extra += '<div style="margin-top:8px"><b>پرفروش‌ترین طرح‌ها:</b> ' + o.list.slice(0, 3).map(r => esc(r.name) + ' (' + faNum(r.m2, 2) + ' متر)').join('، ') + '</div>';
+        if (o.topCust.length) extra += '<div><b>بیشترین خرید از مشتریان:</b> ' + o.topCust.map(c => esc(c)).join('، ') + '</div>';
+        if (o.ret || o.brk) extra += '<div><b>برگشتی:</b> ' + fmtC(o.ret) + ' کارتن (' + faNum(o.retM2, 2) + ' متر) · <b>شکستگی:</b> ' + fmtC(o.brk) + ' کارتن (' + faNum(o.brkM2, 2) + ' متر)</div>';
+        if (!o.list.length) body = '<tr><td colspan="3" style="' + td + '">در این ماه خروجی ثبت نشده است</td></tr>';
+        const net = o.m2 - o.retM2;
+        extra += '<div style="margin-top:6px"><b>خالص خروج (بعد از برگشتی):</b> ' + faNum(net, 2) + ' متر</div>';
+        return '<div style="font-weight:700;margin:6px 0">' + title + '</div><div style="font-size:12px;margin-bottom:6px">' + summary + '</div>' +
+          '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="' + th + '">اسم طرح</th><th style="' + th + '">کارتن</th><th style="' + th + '">متراژ خروج</th></tr></thead><tbody>' + body + '</tbody></table>' + extra;
+      }
+      const inc = monthlyIncoming_(p.y, p.m);
+      body = inc.list.map(r => '<tr><td style="' + td + ';text-align:right">' + esc(r.name) + ' <span style="color:#888;font-size:10px">' + esc(r.size) + (r.grade ? ' · ' + esc(gradeShow(r.grade)) : '') + '</span></td><td style="' + td + '">' + fmtC(Math.round(r.c)) + '</td><td style="' + td + '">' + faNum(r.m2, 2) + '</td></tr>').join('');
+      if (!inc.list.length) body = '<tr><td colspan="3" style="' + td + '">در این ماه ورودی ثبت نشده است</td></tr>';
+      summary = 'رسیدهای ورودی: ' + faNum(inc.count, 0) + ' · جمع کارتن: ' + fmtC(Math.round(inc.cartons)) + ' · جمع متراژ: ' + faNum(inc.m2, 2);
+      if (inc.suppliers.length) extra = '<div><b>شرکت‌ها:</b> ' + inc.suppliers.map(s => esc(s)).join('، ') + '</div>';
+      return '<div style="font-weight:700;margin:6px 0">' + title + '</div><div style="font-size:12px;margin-bottom:6px">' + summary + '</div>' +
+        '<table style="width:100%;border-collapse:collapse;font-size:12px"><thead><tr><th style="' + th + '">اسم طرح</th><th style="' + th + '">کارتن</th><th style="' + th + '">متراژ ورود</th></tr></thead><tbody>' + body + '</tbody></table>' + extra;
+    }
+    function showMonthly(kind) { document.getElementById('monthlyOut').innerHTML = monthlyHtml_(kind); }
+    function shareMonthlyPdf(kind) {
+      const p = monthlyPick_(); if (!p.y || !p.m) { toast('ماه را انتخاب کنید'); return; }
+      const html = '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:10px">' + reportHeaderHtml() + monthlyHtml_(kind) + '</div>';
+      const name = (kind === 'out' ? 'گزارش-خروجی-' : 'گزارش-ورودی-') + p.y + '-' + p.m + '.pdf';
+      toast('در حال ساخت PDF...');
+      generatePDF(html, name).then(blob => { if (blob) showSendBar(blob, name, 'گزارش ماهانه'); });
+    }
+    function renderMonthly() {
+      const sel = document.getElementById('mrMonthWrap'); if (sel) sel.innerHTML = monthlySelectHtml_();
+      document.getElementById('monthlyOut').innerHTML = '';
+    }
+
+    function toggleTheme() {
+      const on = !document.body.classList.contains('theme-dark');
+      document.body.classList.toggle('theme-dark', on);
+      localStorage.setItem('themeDark', on ? '1' : '0');
+    }
+    function applyStoredTheme() { if (localStorage.getItem('themeDark') === '1') document.body.classList.add('theme-dark'); }
+    function locationMapHtml() {
+      const groups = {};
+      (state.items || []).forEach(i => {
+        const parts = String(i.location || '').split(/[+,،\/]/).map(s => s.trim()).filter(Boolean);
+        (parts.length ? parts : ['بدون جایگاه']).forEach(p => { groups[p] = groups[p] || { n: 0, m2: 0 }; groups[p].n++; groups[p].m2 += (Number(i.stockM2) || 0) / parts.length; });
+      });
+      const keys = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'fa'));
+      if (!keys.length) return '<div class="empty">جایگاهی ثبت نشده است</div>';
+      return '<div style="display:flex;flex-wrap:wrap;gap:8px">' + keys.map(k => {
+        const g = groups[k]; const hot = g.m2 > 200;
+        return '<div style="min-width:92px;padding:10px;border-radius:12px;text-align:center;background:' + (hot ? '#7d2519' : '#f3dcd6') + ';color:' + (hot ? '#fff' : '#5c1a10') + ';box-shadow:0 2px 6px rgba(0,0,0,.08)"><div style="font-weight:700;font-size:15px">' + esc(k) + '</div><div style="font-size:11px;margin-top:4px">' + faNum(g.n, 0) + ' طرح</div><div style="font-size:11px">' + faNum(Math.round(g.m2)) + ' متر</div></div>';
+      }).join('') + '</div>';
+    }
+
+    // ===== بخش A: پیام فصلی، صدای انبار، وضعیت پشتیبان، شماره حواله هوشمند =====
+    function persianParts_() {
+      const d = new Date();
+      const p = new Intl.DateTimeFormat('en-u-ca-persian', { year: 'numeric', month: 'numeric', day: 'numeric', timeZone: 'Asia/Tehran' }).formatToParts(d);
+      return { y: Number(p.find(x => x.type === 'year').value), m: Number(p.find(x => x.type === 'month').value), d: Number(p.find(x => x.type === 'day').value) };
+    }
+    function setSeasonBanner() {
+      const el = document.getElementById('seasonBanner'); if (!el) return;
+      const p = persianParts_();
+      let text = '', bg = '#7d2519';
+      if (p.m === 9 && p.d === 30) { text = 'شب یلدا مبارک! امشب، انار و حافظ را فراموش نکنید.'; bg = '#4c1d95'; }
+      else if (p.m === 12 && p.d >= 20) { text = 'نوروز نزدیک است؛ انبار را تمیز و مرتب کنیم تا سال نو با نظم شروع شود.'; bg = '#15803d'; }
+      else if (p.m >= 1 && p.m <= 3) { text = 'بهار است؛ زمان نوسازی و خانه‌تکانی، فروش را پرانرژی کنیم.'; bg = '#16a34a'; }
+      else if (p.m >= 4 && p.m <= 6) { text = 'تابستان است؛ کاشی‌های خنک و روشن پیشنهاد می‌شوند.'; bg = '#0891b2'; }
+      else if (p.m >= 7 && p.m <= 9) { text = 'پاییز است؛ روزهای خوبی برای فروش و بارگیری.'; bg = '#b45309'; }
+      else { text = 'زمستان است؛ گرمای خانه با کاشی‌های گرم‌رنگ.'; bg = '#1e3a8a'; }
+      el.style.cssText = 'margin:6px 0 10px;padding:10px 12px;border-radius:12px;color:#fff;font-size:13px;background:' + bg + ';box-shadow:0 4px 12px rgba(0,0,0,.12)';
+      el.textContent = text;
+    }
+    function playSfx(kind) {
+      try {
+        const C = window.AudioContext || window.webkitAudioContext; if (!C) return;
+        const ctx = window.__actx || (window.__actx = new C());
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = 'sine'; o.frequency.value = kind === 'ok' ? 880 : 520;
+        g.gain.setValueAtTime(0.0001, ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.08, ctx.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + (kind === 'ok' ? 0.22 : 0.1));
+        o.start(); o.stop(ctx.currentTime + 0.25);
+      } catch (e) {}
+    }
+    function renderBackupStatus() {
+      const el = document.getElementById('backupStatus'); if (!el) return;
+      const lb = Number(localStorage.getItem('lastBackupAt') || 0), ls = Number(localStorage.getItem('lastServerSendAt') || 0);
+      const day = 86400000, now = Date.now();
+      const tone = t => t === 0 ? '#991b1b' : (now - t < 2 * day ? '#15803d' : '#b45309');
+      const fmt = t => t ? new Date(t).toLocaleString('fa-IR') : 'هنوز نه';
+      el.innerHTML = '<div style="font-weight:700;margin-bottom:6px">وضعیت پشتیبان</div>' +
+        '<div style="font-size:13px;color:' + tone(lb) + '">● پشتیبان روی گوشی: ' + fmt(lb) + '</div>' +
+        '<div style="font-size:13px;color:' + tone(ls) + ';margin-top:4px">● ارسال به سرور: ' + fmt(ls) + '</div>' +
+        '<div style="font-size:11px;color:#666;margin-top:4px">سبز یعنی در دو روز اخیر، نارنجی یعنی قدیمی است.</div>';
+    }
+    function nextWaybillNo() {
+      const nums = (state.waybills || []).map(w => parseInt(String(w.no).replace(/[^0-9]/g, ''), 10)).filter(n => !isNaN(n));
+      return String((nums.length ? Math.max.apply(null, nums) : 0) + 1);
+    }
+    function refreshWaybillHints() {
+      const inp = document.getElementById('wbNo');
+      if (inp && !inp.value) inp.placeholder = 'پیشنهاد: ' + nextWaybillNo();
+    }
+    // اتصال به رویدادهای موجود
+    const __toastOrig = toast;
+    toast = function (m) { __toastOrig(m); if (/ثبت شد|ذخیره شد|منتشر شد|تأیید شد|فرستاده شد/.test(String(m))) playSfx('ok'); };
+    const __renderAllOrig = renderAll;
+    renderAll = function () { __renderAllOrig(); setSeasonBanner(); renderBackupStatus(); refreshWaybillHints(); const vb = document.getElementById('voiceCfgBox'); if (vb && !vb.dataset.ready) { renderVoiceCfg(); vb.dataset.ready = '1'; } };
+
+
+    // ===== راهنمای جایگاه + لحن دوستانه =====
+    function locationMapHl_(hl) {
+      const groups = {};
+      (state.items || []).forEach(i => {
+        const parts = String(i.location || '').split(/[+,،\/]/).map(s => s.trim()).filter(Boolean);
+        (parts.length ? parts : ['بدون جایگاه']).forEach(p => { groups[p] = groups[p] || { n: 0, m2: 0 }; groups[p].n++; groups[p].m2 += (Number(i.stockM2) || 0) / parts.length; });
+      });
+      const keys = Object.keys(groups).sort((a, b) => a.localeCompare(b, 'fa'));
+      if (!keys.length) return '<div class="empty">جایگاهی ثبت نشده است</div>';
+      return '<div style="display:flex;flex-wrap:wrap;gap:8px">' + keys.map(k => {
+        const g = groups[k]; const on = hl.has(k); const hot = g.m2 > 200;
+        const bg = on ? '#facc15' : (hot ? '#7d2519' : '#f3dcd6');
+        const fg = on ? '#1f2937' : (hot ? '#fff' : '#5c1a10');
+        const ring = on ? 'box-shadow:0 0 0 3px #f59e0b,0 6px 16px rgba(245,158,11,.45);transform:scale(1.06);' : 'box-shadow:0 2px 6px rgba(0,0,0,.08);';
+        return '<div style="min-width:92px;padding:10px;border-radius:12px;text-align:center;background:' + bg + ';color:' + fg + ';transition:all .25s ease;' + ring + '"><div style="font-weight:700;font-size:15px">' + (on ? '📍 ' : '') + esc(k) + '</div><div style="font-size:11px;margin-top:4px">' + faNum(g.n, 0) + ' طرح</div><div style="font-size:11px">' + faNum(Math.round(g.m2)) + ' متر</div></div>';
+      }).join('') + '</div>';
+    }
+    function showLocationGuide() {
+      const q = (document.getElementById('locSearch').value || '').trim();
+      const out = document.getElementById('locGuideOut');
+      if (!q) { out.innerHTML = '<div class="empty">اسم یا کد کالا را بنویسید</div>'; return; }
+      const found = (state.items || []).filter(i => String(i.name).includes(q) || String(i.code).includes(q));
+      if (!found.length) { out.innerHTML = '<div class="empty">چیزی پیدا نشد؛ شاید اسمش را کمی فرق نوشته‌ایم</div>'; return; }
+      const hl = new Set();
+      const lines = found.map(i => {
+        const parts = String(i.location || '').split(/[+,،\/]/).map(s => s.trim()).filter(Boolean);
+        parts.forEach(p => hl.add(p));
+        return '<div style="padding:8px 10px;border-radius:10px;background:#fff7ed;margin-bottom:6px;font-size:13px">🔎 <b>' + esc(i.name) + '</b> (' + esc(i.size) + ') ➜ ' + (parts.length ? '<b style="color:#b45309">' + esc(parts.join(' و ')) + '</b>' : 'جایگاه ثبت نشده') + '</div>';
+      }).join('');
+      out.innerHTML = lines + '<div style="margin-top:8px">' + locationMapHl_(hl) + '</div>';
+    }
+    function toneFriendly_() { return localStorage.getItem('toneFriendly') !== '0'; }
+    function toggleTone() {
+      localStorage.setItem('toneFriendly', toneFriendly_() ? '0' : '1');
+      toast(toneFriendly_() ? 'لحن دوستانه روشن شد 😊' : 'لحن رسمی فعال شد');
+    }
+    function friendlify_(m) {
+      const s = String(m);
+      if (/ثبت نشد/.test(s)) return 'حواله ثبت نشد. دل خودت رو خنک نکن، یه بار دیگه امتحان کن 🙏';
+      if (/حواله.*ثبت شد/.test(s)) return 'آفرین! حواله ثبت شد، خوشه خو 🎉';
+      if (/برگشتی.*ثبت شد/.test(s)) return 'برگشتی ثبت شد، موجودی هم برگشت 🔄 خوشه خو';
+      if (/امضا/.test(s) && /(گرفته|ذخیره|ثبت)/.test(s)) return 'امضا گرفته شد، حالا ثبتش کن ✍️';
+      if (/ذخیره شد/.test(s)) return 'ذخیره شد، دستت درد نکنه 🙌';
+      if (/منتشر شد/.test(s)) return 'موجودی برای دوستان فرستاده شد 📢 خوشه خو';
+      if (/کپی شد/.test(s)) return 'کپی شد، بفرما 👍';
+      if (/حواله تکراری آماده شد/.test(s)) return 'حواله‌ی تکراری آماده‌ست؛ فقط شماره‌اش رو بزن 😉';
+      if (/(ناموفق|خطا)/.test(s)) return 'یه مشکلی خورد... دل خودت رو نگیر، ببینیم چی شده: ' + s;
+      return s;
+    }
+    const __toastTone = toast;
+    toast = function (m) { __toastTone(toneFriendly_() ? friendlify_(m) : m); };
+
+
+    // ===== پیام‌ها و صداهای دلخواه کاربر =====
+    const VOICE_EVENTS = [
+      { k: 'sig', t: 'وقتی امضا گرفته می‌شود' },
+      { k: 'ok', t: 'وقتی حواله ثبت می‌شود' },
+      { k: 'ret', t: 'وقتی برگشتی ثبت می‌شود' },
+      { k: 'saved', t: 'وقتی چیزی ذخیره می‌شود' },
+      { k: 'err', t: 'وقتی خطا یا ثبت‌نشدن پیش می‌آید' }
+    ];
+    function voiceCfg_() { try { return JSON.parse(localStorage.getItem('voiceMsgs') || '{}'); } catch (e) { return {}; } }
+    function saveVoiceCfg_(c) { localStorage.setItem('voiceMsgs', JSON.stringify(c)); }
+    function eventOf_(m) {
+      const s = String(m);
+      if (/امضا/.test(s) && /(گرفته|ذخیره|ثبت)/.test(s)) return 'sig';
+      if (/حواله.*ثبت شد/.test(s)) return 'ok';
+      if (/برگشتی.*ثبت شد/.test(s)) return 'ret';
+      if (/ذخیره شد/.test(s)) return 'saved';
+      if (/(ناموفق|خطا|ثبت نشد)/.test(s)) return 'err';
+      return null;
+    }
+    function speakFa_(text) {
+      try { if (!('speechSynthesis' in window)) return; const u = new SpeechSynthesisUtterance(text); u.lang = 'fa-IR'; speechSynthesis.cancel(); speechSynthesis.speak(u); } catch (e) {}
+    }
+    function playVoiceEvent_(ev) {
+      const c = voiceCfg_()[ev]; if (!c) return;
+      if (c.audio) { try { new Audio(c.audio).play(); } catch (e) {} }
+      else if (c.speak && c.text) speakFa_(c.text);
+    }
+    function renderVoiceCfg() {
+      const box = document.getElementById('voiceCfgBox'); if (!box) return;
+      const cfg = voiceCfg_();
+      box.innerHTML = VOICE_EVENTS.map(ev => {
+        const c = cfg[ev.k] || {};
+        return '<div style="border-bottom:1px solid #e5e7eb;padding:8px 0">' +
+          '<div style="font-weight:700;font-size:13px">' + ev.t + '</div>' +
+          '<input id="vt-' + ev.k + '" value="' + esc(c.text || '') + '" placeholder="مثلاً: امضا گرفته شد، خوشه خو!" style="margin-top:4px">' +
+          '<div style="display:flex;gap:8px;align-items:center;font-size:12px;margin-top:4px"><label style="display:flex;gap:4px;align-items:center"><input type="checkbox" id="vs-' + ev.k + '" style="width:auto" ' + (c.speak ? 'checked' : '') + '> بخوان</label>' +
+          '<input type="file" id="va-' + ev.k + '" accept="audio/*" style="font-size:11px"></div>' +
+          '<div style="display:flex;gap:6px;margin-top:6px"><button class="btn btn-outline" style="flex:1" onclick="previewVoice(\'' + ev.k + '\')">🔊 پیش‌نمایش</button><button class="btn btn-primary" style="flex:1" onclick="saveVoice(\'' + ev.k + '\')">ذخیره</button><button class="btn btn-outline" style="flex:1" onclick="clearVoice(\'' + ev.k + '\')">پاک</button></div>' +
+          (c.audio ? '<div style="font-size:11px;color:#15803d;margin-top:4px">● صدای فایل دارد</div>' : '') +
+          '</div>';
+      }).join('');
+    }
+    function saveVoice(ev) {
+      const cfg = voiceCfg_();
+      const cur = cfg[ev] || {};
+      const text = (document.getElementById('vt-' + ev).value || '').trim();
+      const speak = !!document.getElementById('vs-' + ev).checked;
+      const f = document.getElementById('va-' + ev).files[0];
+      const finish = audio => { cfg[ev] = { text: text, speak: speak, audio: audio !== undefined ? audio : cur.audio || '' }; saveVoiceCfg_(cfg); renderVoiceCfg(); toast('ذخیره شد، دستت درد نکنه ✨'); };
+      if (f) {
+        if (f.size > 150 * 1024) { toast('فایل صدا خیلی بزرگ است؛ کمتر از ۱۵۰ کیلوبایت بگذارید'); return; }
+        const r = new FileReader(); r.onload = () => finish(String(r.result)); r.readAsDataURL(f);
+      } else finish();
+    }
+    function clearVoice(ev) { const cfg = voiceCfg_(); delete cfg[ev]; saveVoiceCfg_(cfg); renderVoiceCfg(); toast('پاک شد'); }
+    function previewVoice(ev) {
+      const c = voiceCfg_()[ev] || {};
+      const text = (document.getElementById('vt-' + ev).value || '').trim() || (VOICE_EVENTS.find(x => x.k === ev) || {}).t;
+      toast(text);
+      if (c.audio) { try { new Audio(c.audio).play(); } catch (e) {} }
+      else if (document.getElementById('vs-' + ev).checked) speakFa_(text);
+    }
+    const __toastVoice = toast;
+    toast = function (m) {
+      const ev = eventOf_(m);
+      const c = ev ? (voiceCfg_()[ev] || {}) : {};
+      if (ev && c.text) { __toastOrig(c.text); }
+      else { __toastVoice(m); }
+      if (ev && (c.audio || c.speak)) playVoiceEvent_(ev);
+    };
+
     function showMore(which) {
-      ['recon','cash','shift','book','import','pick','sizeref','returns'].forEach(k => { const el = document.getElementById('more-' + k); if (el) el.style.display = k === which ? 'block' : 'none'; });
+      ['recon','cash','shift','book','import','pick','sizeref','returns','monthly'].forEach(k => { const el = document.getElementById('more-' + k); if (el) el.style.display = k === which ? 'block' : 'none'; });
       if (which === 'cash') renderCash();
       if (which === 'shift') renderShifts();
       if (which === 'pick') renderPick();
       if (which === 'sizeref') sizeRefRender();
       if (which === 'returns') renderReturns();
+      if (which === 'monthly') renderMonthly();
     }
     function saveBookEntry() {
       const type = document.getElementById('bookType').value;
@@ -3183,7 +3552,13 @@
       }
     }
 
-        function shareWaybillPDF(id) { printReceipt(id); }
+        function shareWaybillPDF(id) {
+      const wb = state.waybills.find(w => w.id === id);
+      if (!wb) { toast('حواله پیدا نشد'); return; }
+      const name = 'حواله-' + wb.no + '.pdf';
+      toast('در حال ساخت PDF...');
+      generatePDF(buildReceiptHtml(wb, false), name).then(blob => { if (blob) showSendBar(blob, name, 'حواله ' + wb.no); });
+    }
 
     function showSendBar(blob, name, title) {
       const old = document.getElementById('sendBar'); if (old) old.remove();
@@ -3217,7 +3592,14 @@
       URL.revokeObjectURL(a.href);
     }
 
-        function shareDailyPDF() { printDaily(); }
+        function shareDailyPDF() {
+      const wrap = document.getElementById('dailyTableWrap');
+      if (!wrap || !wrap.innerHTML.trim()) { toast('ابتدا موجودی روزانه را نمایش دهید'); return; }
+      const html = '<div style="font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;background:#fff;color:#111;padding:8px">' + wrap.innerHTML + '</div>';
+      const name = 'موجودی-روزانه-' + todayISO() + '.pdf';
+      toast('در حال ساخت PDF...');
+      generatePDF(html, name).then(blob => { if (blob) showSendBar(blob, name, 'موجودی روزانه'); });
+    }
 
         function printDaily() {
       const wrap = document.getElementById('dailyTableWrap').innerHTML;
@@ -3655,6 +4037,7 @@
         result=await cloudClient.from('warehouse_private_state').insert({warehouse_id:CLOUD_WAREHOUSE_ID,state:payload,updated_at:new Date().toISOString()});
       }
       if(result.error){cloudStatus('ارسال ناموفق: '+result.error.message,true);return;}
+      localStorage.setItem('lastServerSendAt', String(Date.now()));
       cloudStatus('ارسال اطلاعات کامل شد. برای اطمینان، یک بار «دریافت از سرور» را هم آزمایش کن.');
     }
     async function cloudLogout(){
@@ -3680,6 +4063,7 @@
     loadState();
     renderAll();
     applyFont();
+    applyStoredTheme();
     applyFont();
     hideWarehouseSig();
     checkBackupReminder();
