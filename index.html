@@ -3471,14 +3471,15 @@
         minHeight: '100px',
         background: '#ffffff',
         color: '#1f2937',
-        zIndex: '0',
-        opacity: '0.01',
+        zIndex: '2147483000',
+        opacity: '1',
         pointerEvents: 'none',
         overflow: 'visible',
         padding: '0',
         margin: '0'
       });
 
+      temp.style.inset = '0'; temp.style.width = '100%'; temp.style.height = 'auto';
       // Wait for images (logo) to load
       const imgs = Array.from(temp.querySelectorAll('img'));
       await Promise.all(imgs.map(img => {
@@ -3537,6 +3538,7 @@
         temp.innerHTML = '';
         temp.style.opacity = '0';
         temp.style.zIndex = '-1';
+        temp.style.inset = '';
         if (!blob || blob.size < 500) {
           toast('PDF خالی ساخته شد — دوباره تلاش کنید');
           return null;
