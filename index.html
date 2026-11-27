@@ -4064,6 +4064,16 @@
       if(!confirm('نسخه فعلی این گوشی در سرور ذخیره می‌شود و اطلاعات قبلی سرور را جایگزین می‌کند. فقط اگر از صحت اطلاعات مطمئنی ادامه بده.'))return;
       cloudStatus('در حال ارسال اطلاعات به سرور...');
       const payload=JSON.parse(JSON.stringify(state));
+      const {data:existing,error:readError}=await cloudClient.from('warehouse_private_state')
+        .select('warehouse_id').eq('warehouse_id',CLOUD_WAREHOUSE_ID).maybeSingle();
+      if(readError){cloudStatus('بررسی وضعیت سرور ناموفق: '+readError.message,true);return;}
+      let result;
+      if(existing){
+        result=await cloudClient.from('warehouse_private_state').update({state:payload,updated_at:new Date().toISOString()}).eq('warehouse_id',CLOUD_WAREHOUSE_ID);
+      }else{
+        result=await cloudClient.from('warehouse_private_state').insert({warehouse_id:CLOUD_WAREHOUSE_ID,state:payload,updated_at:new Date().toISOString()});
+      }
+      if(result.error){cloudStatus('ارسال ناموفق: '+result.error.message,true);return;}
       const inventoryRows=(state.items||[]).map(item=>({
         warehouse_id:CLOUD_WAREHOUSE_ID,
         item_id:String(item.id||item.code||''),
@@ -4082,16 +4092,6 @@
       }));
       const {error:publishError}=await cloudClient.rpc('publish_inventory',{p_warehouse_id:CLOUD_WAREHOUSE_ID,p_rows:inventoryRows});
       if(publishError){cloudStatus('ارسال موجودی ناموفق؛ هیچ تغییری روی سرور اعمال نشد: '+publishError.message,true);return;}
-      const {data:existing,error:readError}=await cloudClient.from('warehouse_private_state')
-        .select('warehouse_id').eq('warehouse_id',CLOUD_WAREHOUSE_ID).maybeSingle();
-      if(readError){cloudStatus('بررسی وضعیت سرور ناموفق: '+readError.message,true);return;}
-      let result;
-      if(existing){
-        result=await cloudClient.from('warehouse_private_state').update({state:payload,updated_at:new Date().toISOString()}).eq('warehouse_id',CLOUD_WAREHOUSE_ID);
-      }else{
-        result=await cloudClient.from('warehouse_private_state').insert({warehouse_id:CLOUD_WAREHOUSE_ID,state:payload,updated_at:new Date().toISOString()});
-      }
-      if(result.error){cloudStatus('ارسال ناموفق: '+result.error.message,true);return;}
       localStorage.setItem('lastServerSendAt', String(Date.now()));
       cloudStatus('ارسال اطلاعات کامل شد. برای اطمینان، یک بار «دریافت از سرور» را هم آزمایش کن.');
     }
